@@ -42,14 +42,14 @@ function createWindow() {
 
   // Graceful show after content loads
   mainWindow.once('ready-to-show', function () {
-    mainWindow.show();
+    showMainWindow();
 
     // If a file was passed at launch, send it to the renderer
     if (pendingFilePath) {
-      mainWindow.webContents.send('open-file', pendingFilePath);
+      openFileInRenderer(pendingFilePath);
       pendingFilePath = null;
     } else if (initialFilePath) {
-      mainWindow.webContents.send('open-file', initialFilePath);
+      openFileInRenderer(initialFilePath);
       initialFilePath = null;
     }
   });
@@ -57,16 +57,52 @@ function createWindow() {
   // Dock click behavior — macOS: re-show window when clicking Dock icon
   app.on('activate', function () {
     if (mainWindow) {
-      if (mainWindow.isMinimized()) {
-        mainWindow.restore();
-      }
-      mainWindow.show();
+      showMainWindow();
+    } else {
+      createWindow();
     }
   });
 
   mainWindow.on('closed', function () {
     mainWindow = null;
   });
+}
+
+function showMainWindow() {
+  if (!mainWindow) return;
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore();
+  }
+  mainWindow.show();
+  mainWindow.focus();
+}
+
+function openFileInRenderer(filePath) {
+  if (!filePath) return;
+
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    pendingFilePath = filePath;
+    if (app.isReady()) {
+      createWindow();
+      buildMenu();
+    }
+    return;
+  }
+
+  showMainWindow();
+
+  if (mainWindow.webContents.isLoading()) {
+    pendingFilePath = filePath;
+    mainWindow.webContents.once('did-finish-load', function () {
+      if (pendingFilePath) {
+        mainWindow.webContents.send('open-file', pendingFilePath);
+        pendingFilePath = null;
+      }
+    });
+    return;
+  }
+
+  mainWindow.webContents.send('open-file', filePath);
 }
 
 // ── App Lifecycle ──
@@ -86,13 +122,7 @@ app.whenReady().then(function () {
 // macOS: handle file open events (double-click, `open -a` etc.)
 app.on('open-file', function (event, filePath) {
   event.preventDefault();
-
-  if (mainWindow && mainWindow.webContents) {
-    mainWindow.webContents.send('open-file', filePath);
-  } else {
-    // Window not ready yet — store for later
-    pendingFilePath = filePath;
-  }
+  openFileInRenderer(filePath);
 });
 
 // Capture file path from command-line arguments (e.g., `prism-player /path/to/video.mkv`)
@@ -203,10 +233,7 @@ ipcMain.handle('window-hide', function () {
 
 /** Window control: show */
 ipcMain.handle('window-show', function () {
-  if (mainWindow) {
-    mainWindow.show();
-    mainWindow.focus();
-  }
+  showMainWindow();
 });
 
 /** Check if window is maximized */
@@ -319,6 +346,7 @@ function buildMenu() {
     {
       label: '窗口',
       submenu: [
+        { label: '关闭窗口', accelerator: 'Cmd+W', click: closeWindowFromMenu },
         { role: 'minimize' },
         { role: 'zoom' },
         { type: 'separator' },
@@ -380,6 +408,12 @@ function openSubtitleFileFromMenu() {
 function toggleFullscreenFromMenu() {
   if (mainWindow) {
     mainWindow.setFullScreen(!mainWindow.isFullScreen());
+  }
+}
+
+function closeWindowFromMenu() {
+  if (mainWindow) {
+    mainWindow.close();
   }
 }
 
