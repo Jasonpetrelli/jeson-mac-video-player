@@ -137,14 +137,16 @@ document.addEventListener('fullscreenchange', function() {
 /* ── Favorites ── */
 
 function toggleFav() {
-  const item = playlist.find(function(v) { return v.id === currentVideoId; });
+  const item = playlist.find(function(v) { return v.id === currentVideoId; }) ||
+    favorites.find(function(v) { return v.id === currentVideoId; });
   if (!item) {
     toast('请先选择视频');
     return;
   }
+  var wasFav = isFavoriteItem(item);
   toggleFavoriteById(currentVideoId);
-  toast(item.favorite ? '★ 已收藏：' + item.title : '♡ 已取消收藏');
-  showKbd(item.favorite ? '★ 已收藏' : '☆ 取消收藏');
+  toast(!wasFav ? '★ 已收藏：' + item.title : '♡ 已取消收藏');
+  showKbd(!wasFav ? '★ 已收藏' : '☆ 取消收藏');
 }
 
 /* ── Sidebar nav ── */
@@ -417,4 +419,3 @@ function toggleFavFilter() {
 
   renderSidebar();
 }
-

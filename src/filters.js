@@ -5,8 +5,9 @@
 
 /** Update favorite button states */
 function renderFavBtns() {
-  const item = playlist.find(function(v) { return v.id === currentVideoId; });
-  const isFav = item ? item.favorite : false;
+  const item = playlist.find(function(v) { return v.id === currentVideoId; }) ||
+    favorites.find(function(v) { return v.id === currentVideoId; });
+  const isFav = item ? isFavoriteItem(item) : false;
   DOM.favBtn.classList.toggle('faved', isFav);
   DOM.favBtn2.classList.toggle('active', isFav);
 }

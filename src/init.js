@@ -21,6 +21,8 @@ function initState() {
     }
     if (saved.videos) {
       saved.videos.forEach(function(v) {
+        var wasFavorite = v.favorite === true;
+        v.favorite = false;
         if (v.type === 'network') {
           // Network videos can be reloaded from their URL
           v.unavailable = false;
@@ -45,6 +47,24 @@ function initState() {
           v._fileLastModified = v._fileLastModified || null;
           v._mseUnsupported = v._mseUnsupported === true;
           playlist.push(v);
+        }
+        if (wasFavorite && !findFavoriteByItem(v)) {
+          favorites.push(cloneVideoForFavorite(v));
+        }
+      });
+    }
+    if (saved.favorites) {
+      saved.favorites.forEach(function(v) {
+        v.favorite = true;
+        if (v.type === 'local' && IS_ELECTRON && v._filePath) {
+          v.url = getLocalFileURL(v._filePath);
+          v.unavailable = false;
+          var fileExt = (v._filePath || v.title || '').split('.').pop().toLowerCase();
+          v._needsMSE = (fileExt === 'mkv' || fileExt === 'webm');
+          v._fileRef = null;
+        }
+        if (!findFavoriteByItem(v)) {
+          favorites.push(v);
         }
       });
     }
@@ -120,12 +140,32 @@ function onBeforeUnload() {
       type: v.type,
       duration: v.duration,
       progress: v.progress,
-      favorite: v.favorite,
+      favorite: false,
       thumbnail: '',
       lastPlayedAt: v.lastPlayedAt,
       addedAt: v.addedAt,
       lastPosition: v.lastPosition || 0,
       _filePath: v._filePath || null,  // Electron: persist absolute file path
+      _fileName: v._fileName || null,
+      _fileSize: v._fileSize || null,
+      _fileLastModified: v._fileLastModified || null,
+      _mseUnsupported: v._mseUnsupported === true
+    };
+  });
+  const serializedFavorites = favorites.map(function(v) {
+    return {
+      id: v.id,
+      title: v.title,
+      url: v.type === 'network' ? v.url : '',
+      type: v.type,
+      duration: v.duration,
+      progress: v.progress,
+      favorite: true,
+      thumbnail: '',
+      lastPlayedAt: v.lastPlayedAt,
+      addedAt: v.addedAt,
+      lastPosition: v.lastPosition || 0,
+      _filePath: v._filePath || null,
       _fileName: v._fileName || null,
       _fileSize: v._fileSize || null,
       _fileLastModified: v._fileLastModified || null,
@@ -151,6 +191,7 @@ function onBeforeUnload() {
       subDelay: settings.subDelay || 0
     },
     videos: serializedVideos,
+    favorites: serializedFavorites,
     currentVideoId: currentVideoId,
     favFilterActive: ui.favFilterActive,
     settingsTab: ui.settingsTab,

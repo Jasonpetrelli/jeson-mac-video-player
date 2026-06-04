@@ -25,6 +25,28 @@ function getLocalFileURL(filePath) {
   }).join('/');
 }
 
+function getVideoKey(item) {
+  if (!item) return '';
+  return item._filePath || item.url || item.id;
+}
+
+function findFavoriteByItem(item) {
+  var key = getVideoKey(item);
+  return favorites.find(function(v) { return getVideoKey(v) === key; }) || null;
+}
+
+function isFavoriteItem(item) {
+  return !!findFavoriteByItem(item);
+}
+
+function cloneVideoForFavorite(item) {
+  var copy = Object.assign({}, item);
+  copy.favorite = true;
+  copy._blobUrl = null;
+  copy._fileRef = null;
+  return copy;
+}
+
 /** Create a VideoItem from a local File object */
 function addLocalFile(file) {
   var filePath = getLocalFilePath(file);
@@ -33,6 +55,7 @@ function addLocalFile(file) {
     duplicate.unavailable = false;
     if (filePath) duplicate._filePath = filePath;
     duplicate._fileRef = duplicate._needsMSE ? file : null;
+    duplicate.favorite = isFavoriteItem(duplicate);
     toast('已在队列中：' + duplicate.title);
     renderSidebar();
     return duplicate;
@@ -64,6 +87,7 @@ function addLocalFile(file) {
     _fileLastModified: file.lastModified,
     _mseUnsupported: false
   };
+  item.favorite = isFavoriteItem(item);
   playlist.push(item);
   renderSidebar();
   return item;
@@ -86,6 +110,7 @@ function addNetworkUrl(url, title) {
     unavailable: false,
     _blobUrl: null
   };
+  item.favorite = isFavoriteItem(item);
   playlist.push(item);
   renderSidebar();
   return item;
@@ -132,19 +157,16 @@ function removeVideo(id) {
 
 function clearPlaylist() {
   if (playlist.length === 0) return;
-  if (!window.confirm('确定清空播放队列？收藏的视频会保留。')) return;
+  if (!window.confirm('确定清空播放队列？收藏不会受影响。')) return;
 
   for (var i = 0; i < playlist.length; i++) {
-    if (!playlist[i].favorite && playlist[i]._blobUrl) {
+    if (playlist[i]._blobUrl) {
       try { URL.revokeObjectURL(playlist[i]._blobUrl); } catch (e) { /* ignore */ }
     }
   }
 
-  var removedCurrent = currentVideoId && playlist.some(function(v) {
-    return v.id === currentVideoId && !v.favorite;
-  });
-
-  playlist = playlist.filter(function(v) { return v.favorite; });
+  var removedCurrent = currentVideoId && playlist.some(function(v) { return v.id === currentVideoId; });
+  playlist = [];
 
   if (removedCurrent) {
     destroyMSEPipeline();
@@ -173,7 +195,8 @@ function clearPlaylist() {
 
 /** Switch to a video by ID */
 function switchToVideo(id) {
-  const item = playlist.find(function(v) { return v.id === id; });
+  const item = playlist.find(function(v) { return v.id === id; }) ||
+    favorites.find(function(v) { return v.id === id; });
   if (!item) return;
 
   // If item is unavailable (blob URL expired), notify user
@@ -226,29 +249,20 @@ function switchToVideo(id) {
   DOM.video.src = item.url;
   DOM.video.load();
 
-  // Try to seek to last position — prompt user via toast
+  // Restore last playback position automatically
   var seekTarget = null;
   if (item.lastPosition && item.lastPosition > 2 && item.duration > 0) {
     seekTarget = item.lastPosition;
-    // Show resume toast with clickable action
-    var seekId = id; // capture in closure
-    setTimeout(function() {
-      toast('⏩ 从上次位置继续？' + formatTime(seekTarget), 4000, function() {
-        var it = playlist.find(function(v) { return v.id === seekId; });
-        if (it && it.lastPosition) {
-          DOM.video.currentTime = it.lastPosition;
-        }
-      });
-    }, 300);
   } else if (item.progress > 0 && item.duration > 0) {
     // Fallback to progress percentage
     seekTarget = item.progress * item.duration;
-    if (seekTarget > 2) {
-      DOM.video.addEventListener('loadedmetadata', function onMeta() {
-        DOM.video.currentTime = seekTarget;
-        DOM.video.removeEventListener('loadedmetadata', onMeta);
-      });
-    }
+  }
+
+  if (seekTarget && seekTarget > 2) {
+    DOM.video.addEventListener('loadedmetadata', function onMeta() {
+      DOM.video.currentTime = seekTarget;
+      DOM.video.removeEventListener('loadedmetadata', onMeta);
+    });
   }
 
   // Update last played
@@ -265,26 +279,46 @@ function switchToVideo(id) {
 
 /** Update a video item's duration after metadata loads */
 function updateVideoDuration(id, duration) {
-  const item = playlist.find(function(v) { return v.id === id; });
+  const item = playlist.find(function(v) { return v.id === id; }) ||
+    favorites.find(function(v) { return v.id === id; });
   if (item && duration > 0 && item.duration !== duration) {
     item.duration = duration;
+    var fav = findFavoriteByItem(item);
+    if (fav && fav !== item) fav.duration = duration;
     renderSidebar();
   }
 }
 
 /** Update a video item's progress (0-1) */
 function updateVideoProgress(id, currentTime, duration) {
-  const item = playlist.find(function(v) { return v.id === id; });
+  const item = playlist.find(function(v) { return v.id === id; }) ||
+    favorites.find(function(v) { return v.id === id; });
   if (item && duration > 0) {
     item.progress = clamp(currentTime / duration, 0, 1);
+    var fav = findFavoriteByItem(item);
+    if (fav && fav !== item) fav.progress = item.progress;
   }
 }
 
 /** Toggle favorite for a video by ID */
 function toggleFavoriteById(id) {
-  const item = playlist.find(function(v) { return v.id === id; });
+  const item = playlist.find(function(v) { return v.id === id; }) ||
+    favorites.find(function(v) { return v.id === id; });
   if (!item) return;
-  item.favorite = !item.favorite;
+  var fav = findFavoriteByItem(item);
+  if (fav) {
+    favorites = favorites.filter(function(v) { return getVideoKey(v) !== getVideoKey(item); });
+    item.favorite = false;
+  } else {
+    item.favorite = true;
+    favorites.push(cloneVideoForFavorite(item));
+  }
+
+  for (var i = 0; i < playlist.length; i++) {
+    if (getVideoKey(playlist[i]) === getVideoKey(item)) {
+      playlist[i].favorite = item.favorite;
+    }
+  }
   renderSidebar();
   renderFavBtns();
 }
@@ -372,6 +406,13 @@ function cardCtxReveal() {
 }
 
 function cardCtxRemove() {
-  if (_cardCtxTargetId) removeVideo(_cardCtxTargetId);
+  if (_cardCtxTargetId) {
+    if (ui.sidebarFilter === 'favorites') {
+      toggleFavoriteById(_cardCtxTargetId);
+      toast('♡ 已取消收藏');
+    } else {
+      removeVideo(_cardCtxTargetId);
+    }
+  }
   closeCardCtx();
 }

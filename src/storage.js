@@ -25,11 +25,18 @@ function storageLoad() {
 /** Save current playback position for the active video */
 function savePlaybackPosition() {
   if (!currentVideoId || playback.duration <= 0) return;
-  const item = playlist.find(function(v) { return v.id === currentVideoId; });
+  const item = playlist.find(function(v) { return v.id === currentVideoId; }) ||
+    favorites.find(function(v) { return v.id === currentVideoId; });
   if (item) {
     item.lastPosition = playback.currentTime;
     item.progress = clamp(playback.currentTime / playback.duration, 0, 1);
     item.duration = playback.duration;
+    var fav = findFavoriteByItem(item);
+    if (fav && fav !== item) {
+      fav.lastPosition = item.lastPosition;
+      fav.progress = item.progress;
+      fav.duration = item.duration;
+    }
   }
 }
 
@@ -48,4 +55,3 @@ function stopAutoSave() {
     _autoSaveTimer = null;
   }
 }
-

@@ -73,39 +73,38 @@ function renderSpeedUI() {
 function renderSidebar() {
   const list = DOM.videoList;
   list.innerHTML = '';
+  var sourceItems = ui.sidebarFilter === 'favorites' ? favorites : playlist;
 
   // ── Empty state ──
-  if (playlist.length === 0) {
+  if (sourceItems.length === 0) {
     list.innerHTML =
       '<div class="sb-empty">' +
         '<div class="sb-empty-icon">🎬</div>' +
-        '<div class="sb-empty-text">暂无视频</div>' +
-        '<div class="sb-empty-hint">拖放文件到窗口，或点击 + 添加</div>' +
-        '<button class="sb-empty-add" onclick="openAddVideoModal()">+ 添加视频</button>' +
+        '<div class="sb-empty-text">' + (ui.sidebarFilter === 'favorites' ? '暂无收藏' : '暂无视频') + '</div>' +
+        '<div class="sb-empty-hint">' + (ui.sidebarFilter === 'favorites' ? '收藏的视频会显示在这里' : '拖放文件到窗口，或点击 + 添加') + '</div>' +
+        (ui.sidebarFilter === 'favorites' ? '' : '<button class="sb-empty-add" onclick="openAddVideoModal()">+ 添加视频</button>') +
       '</div>';
     return;
   }
 
   // Apply search filter
-  let items = playlist.slice();
+  let items = sourceItems.slice();
   let filteredIndices = []; // maps filtered index → playlist index
   if (ui.searchQuery) {
     const q = ui.searchQuery.toLowerCase();
     items = items.filter(function(v) { return v.title.toLowerCase().includes(q); });
     // Build filtered index map
-    playlist.forEach(function(v, i) {
+    sourceItems.forEach(function(v, i) {
       if (v.title.toLowerCase().includes(ui.searchQuery.toLowerCase())) {
         filteredIndices.push(i);
       }
     });
   } else {
-    for (let i = 0; i < playlist.length; i++) filteredIndices.push(i);
+    for (let i = 0; i < sourceItems.length; i++) filteredIndices.push(i);
   }
 
   // Apply nav filter
-  if (ui.sidebarFilter === 'favorites') {
-    items = items.filter(function(v) { return v.favorite; });
-  } else if (ui.sidebarFilter === 'finished') {
+  if (ui.sidebarFilter === 'finished') {
     items = items.filter(function(v) { return v.progress >= 1; });
   } else if (ui.sidebarFilter === 'recent') {
     items = items.filter(function(v) { return v.lastPlayedAt > 0; });
@@ -124,7 +123,7 @@ function renderSidebar() {
 
   // Build a map from item.id → playlist index for reordering
   const idToPlaylistIdx = {};
-  playlist.forEach(function(v, i) { idToPlaylistIdx[v.id] = i; });
+  sourceItems.forEach(function(v, i) { idToPlaylistIdx[v.id] = i; });
 
   items.forEach(function(item, displayIdx) {
     const playlistIdx = idToPlaylistIdx[item.id] !== undefined ? idToPlaylistIdx[item.id] : displayIdx;
@@ -137,7 +136,7 @@ function renderSidebar() {
       (isUnavailable ? ' unavailable' : '');
     card.setAttribute('data-id', item.id);
     card.setAttribute('data-idx', String(playlistIdx));
-    card.setAttribute('draggable', 'true');
+    card.setAttribute('draggable', ui.sidebarFilter === 'favorites' ? 'false' : 'true');
     card.style.position = 'relative';
 
     // Click to switch
@@ -151,6 +150,7 @@ function renderSidebar() {
 
     // ── Drag-and-drop reorder ──
     card.addEventListener('dragstart', function(e) {
+      if (ui.sidebarFilter === 'favorites') return;
       _dragSrcId = item.id;
       card.classList.add('dragging');
       e.dataTransfer.effectAllowed = 'move';
@@ -165,6 +165,7 @@ function renderSidebar() {
       });
     });
     card.addEventListener('dragover', function(e) {
+      if (ui.sidebarFilter === 'favorites') return;
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
       if (_dragSrcId === item.id) return;
@@ -183,6 +184,7 @@ function renderSidebar() {
       card.classList.remove('drag-over-top', 'drag-over-bottom');
     });
     card.addEventListener('drop', function(e) {
+      if (ui.sidebarFilter === 'favorites') return;
       e.preventDefault();
       card.classList.remove('drag-over-top', 'drag-over-bottom');
 
@@ -245,7 +247,8 @@ function escapeHtml(str) {
 
 /** Update titlebar with current video title */
 function updateTitlebar() {
-  const item = playlist.find(function(v) { return v.id === currentVideoId; });
+  const item = playlist.find(function(v) { return v.id === currentVideoId; }) ||
+    favorites.find(function(v) { return v.id === currentVideoId; });
   if (item) {
     DOM.titlebarTitle.textContent = 'Prism · ' + item.title;
   } else {
@@ -282,4 +285,3 @@ function applySceneStyle() {
 
 /** Alias — both names point to the same function */
 var applyVideoFilter = applySceneStyle;
-

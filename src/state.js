@@ -45,6 +45,9 @@ const ui = {
 /** @type {VideoItem[]} */
 let playlist = [];
 
+/** @type {VideoItem[]} */
+let favorites = [];
+
 /** @type {string} */
 let currentVideoId = '';
 
@@ -93,4 +96,3 @@ function syncVideo() {
 function partial_has(obj, key) {
   return obj.hasOwnProperty(key);
 }
-

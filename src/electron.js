@@ -12,6 +12,7 @@ function addLocalFileFromPath(filePath) {
     duplicate.unavailable = false;
     duplicate._filePath = filePath;
     duplicate.url = getLocalFileURL(filePath);
+    duplicate.favorite = isFavoriteItem(duplicate);
     toast('已在队列中：' + duplicate.title);
     renderSidebar();
     return duplicate;
@@ -42,6 +43,7 @@ function addLocalFileFromPath(filePath) {
     _fileName: fileName,
     _mseUnsupported: false
   };
+  item.favorite = isFavoriteItem(item);
   playlist.push(item);
   renderSidebar();
   return item;

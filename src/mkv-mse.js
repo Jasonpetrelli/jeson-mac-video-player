@@ -141,10 +141,7 @@ async function loadViaMSE(item) {
 
     // Resume from last position
     if (item.lastPosition && item.lastPosition > 2) {
-      var seekTarget = item.lastPosition;
-      toast('⏩ 从上次位置继续？' + formatTime(seekTarget), 4000, function() {
-        videoSeek(seekTarget);
-      });
+      videoSeek(item.lastPosition);
     }
 
   } catch (err) {
