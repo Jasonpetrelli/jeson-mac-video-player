@@ -1,6 +1,7 @@
 const { app, BrowserWindow, dialog, ipcMain, Menu, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { pathToFileURL } = require('url');
 
 // ── Globals ──
 
@@ -146,8 +147,7 @@ ipcMain.handle('read-file-buffer', async function (event, filePath) {
 /** Get a file:// URL for a local file path */
 ipcMain.handle('get-file-url', function (event, filePath) {
   try {
-    var normalized = path.normalize(filePath);
-    return 'file://' + normalized;
+    return pathToFileURL(filePath).href;
   } catch (err) {
     return null;
   }

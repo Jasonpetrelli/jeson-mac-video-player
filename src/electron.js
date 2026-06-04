@@ -11,7 +11,7 @@ function addLocalFileFromPath(filePath) {
   if (duplicate) {
     duplicate.unavailable = false;
     duplicate._filePath = filePath;
-    duplicate.url = 'file://' + filePath;
+    duplicate.url = getLocalFileURL(filePath);
     toast('已在队列中：' + duplicate.title);
     renderSidebar();
     return duplicate;
@@ -25,7 +25,7 @@ function addLocalFileFromPath(filePath) {
   var item = {
     id: generateId(),
     title: title,
-    url: 'file://' + filePath,
+    url: getLocalFileURL(filePath),
     type: 'local',
     duration: 0,
     progress: 0,

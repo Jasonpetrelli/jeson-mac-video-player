@@ -18,6 +18,13 @@ function findLocalDuplicate(filePath, file) {
   return null;
 }
 
+function getLocalFileURL(filePath) {
+  if (!filePath) return '';
+  return 'file://' + filePath.split('/').map(function(part) {
+    return encodeURIComponent(part);
+  }).join('/');
+}
+
 /** Create a VideoItem from a local File object */
 function addLocalFile(file) {
   var filePath = getLocalFilePath(file);
@@ -197,9 +204,15 @@ function switchToVideo(id) {
   _pendingAutoPlay = true;
 
   // In Electron, if we have a _filePath but no valid URL, reconstruct it
-  if (IS_ELECTRON && item._filePath && (!item.url || item.unavailable)) {
-    item.url = 'file://' + item._filePath;
-    item.unavailable = false;
+  if (IS_ELECTRON && item._filePath) {
+    item.url = getLocalFileURL(item._filePath);
+    item.unavailable = !item.url;
+  }
+
+  if (!item.url) {
+    toast('⚠ 无法读取文件路径：' + truncateMiddle(item.title, 24));
+    _pendingAutoPlay = false;
+    return;
   }
 
   DOM.video.src = item.url;

@@ -28,7 +28,7 @@ function initState() {
         } else if (v.type === 'local') {
           // In Electron, if we have a saved _filePath, the file is still accessible
           if (IS_ELECTRON && v._filePath) {
-            v.url = 'file://' + v._filePath;
+            v.url = getLocalFileURL(v._filePath);
             v.unavailable = false;
             var fileExt = (v._filePath || v.title || '').split('.').pop().toLowerCase();
             v._needsMSE = (fileExt === 'mkv' || fileExt === 'webm');

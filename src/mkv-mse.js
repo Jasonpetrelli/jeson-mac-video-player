@@ -105,7 +105,7 @@ async function loadViaMSE(item) {
         _pendingAutoPlay = false;
         playback.isMSEMode = false;
         if (IS_ELECTRON && item._filePath && (!item.url || item.unavailable)) {
-          item.url = 'file://' + item._filePath;
+          item.url = getLocalFileURL(item._filePath);
           item.unavailable = false;
         }
         DOM.video.src = item.url;
