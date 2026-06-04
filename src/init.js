@@ -40,6 +40,9 @@ function initState() {
             v._blobUrl = null;
             v.unavailable = true;
           }
+          v._fileName = v._fileName || null;
+          v._fileSize = v._fileSize || null;
+          v._fileLastModified = v._fileLastModified || null;
           playlist.push(v);
         }
       });
@@ -119,7 +122,10 @@ function onBeforeUnload() {
       lastPlayedAt: v.lastPlayedAt,
       addedAt: v.addedAt,
       lastPosition: v.lastPosition || 0,
-      _filePath: v._filePath || null  // Electron: persist absolute file path
+      _filePath: v._filePath || null,  // Electron: persist absolute file path
+      _fileName: v._fileName || null,
+      _fileSize: v._fileSize || null,
+      _fileLastModified: v._fileLastModified || null
     };
   });
 
@@ -195,4 +201,3 @@ document.addEventListener('DOMContentLoaded', function() {
     console.warn('[Prism] mp4box.js CDN failed to load — MKV remux unavailable');
   }
 });
-

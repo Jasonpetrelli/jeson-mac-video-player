@@ -7,6 +7,16 @@
  * @returns {object} The created playlist item
  */
 function addLocalFileFromPath(filePath) {
+  var duplicate = findLocalDuplicate(filePath, null);
+  if (duplicate) {
+    duplicate.unavailable = false;
+    duplicate._filePath = filePath;
+    duplicate.url = 'file://' + filePath;
+    toast('已在队列中：' + duplicate.title);
+    renderSidebar();
+    return duplicate;
+  }
+
   var fileName = filePath.split('/').pop() || filePath;
   var fileExt = fileName.split('.').pop().toLowerCase();
   var isMKV = (fileExt === 'mkv' || fileExt === 'webm');
@@ -28,7 +38,8 @@ function addLocalFileFromPath(filePath) {
     _blobUrl: null,
     _needsMSE: isMKV,
     _fileRef: null,
-    _filePath: filePath
+    _filePath: filePath,
+    _fileName: fileName
   };
   playlist.push(item);
   renderSidebar();
@@ -76,16 +87,19 @@ async function electronOpenFolderDialog() {
       var dirPath = result.filePaths[d];
       var videos = await window.electronAPI.scanDirectory(dirPath);
       var firstAddedId = null;
+      var addedCount = 0;
 
       for (var i = 0; i < videos.length; i++) {
         var v = videos[i];
+        var beforeCount = playlist.length;
         var item = addLocalFileFromPath(v.path);
+        if (playlist.length > beforeCount) addedCount++;
         if (!firstAddedId) firstAddedId = item.id;
       }
 
       if (firstAddedId) {
         switchToVideo(firstAddedId);
-        toast('📂 已添加 ' + videos.length + ' 个视频');
+        toast('📂 已添加 ' + addedCount + ' 个视频');
       } else {
         toast('📂 该文件夹下未找到视频文件');
       }

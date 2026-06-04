@@ -203,6 +203,23 @@
       padding: 0 16px 5px;
     }
     .sb-queue-header .sb-label { padding: 0; }
+    .sb-queue-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .sb-action-btn {
+      height: 20px;
+      border: none;
+      background: transparent;
+      color: var(--t-3);
+      border-radius: 4px;
+      cursor: pointer;
+      padding: 0 6px;
+      font-size: 11px;
+      transition: background var(--dur-fast), color var(--dur-fast);
+    }
+    .sb-action-btn:hover { background: var(--bg-3); color: oklch(65% 0.18 25); }
     .sb-add-btn {
       width: 20px; height: 20px;
       border: none;

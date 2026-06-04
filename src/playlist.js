@@ -2,15 +2,38 @@
 // ── Drag-and-drop reorder state ──
 let _dragSrcId = null;
 
+function getLocalFilePath(file) {
+  return (IS_ELECTRON && file.path) ? file.path : null;
+}
+
+function findLocalDuplicate(filePath, file) {
+  for (var i = 0; i < playlist.length; i++) {
+    var item = playlist[i];
+    if (item.type !== 'local') continue;
+    if (filePath && item._filePath === filePath) return item;
+    if (!filePath && file && item._fileName === file.name && item._fileSize === file.size && item._fileLastModified === file.lastModified) {
+      return item;
+    }
+  }
+  return null;
+}
+
 /** Create a VideoItem from a local File object */
 function addLocalFile(file) {
+  var filePath = getLocalFilePath(file);
+  var duplicate = findLocalDuplicate(filePath, file);
+  if (duplicate) {
+    duplicate.unavailable = false;
+    if (filePath) duplicate._filePath = filePath;
+    duplicate._fileRef = duplicate._needsMSE ? file : null;
+    toast('已在队列中：' + duplicate.title);
+    renderSidebar();
+    return duplicate;
+  }
+
   const url = URL.createObjectURL(file);
   var fileExt = file.name.split('.').pop().toLowerCase();
   var isMKV = (fileExt === 'mkv' || fileExt === 'webm');
-
-  // In Electron, file.path gives the absolute filesystem path
-  // This allows persistent access after reload and "Show in Finder"
-  var filePath = (IS_ELECTRON && file.path) ? file.path : null;
 
   const item = {
     id: generateId(),
@@ -28,7 +51,10 @@ function addLocalFile(file) {
     _blobUrl: url,
     _needsMSE: isMKV,
     _fileRef: isMKV ? file : null,
-    _filePath: filePath
+    _filePath: filePath,
+    _fileName: file.name,
+    _fileSize: file.size,
+    _fileLastModified: file.lastModified
   };
   playlist.push(item);
   renderSidebar();
@@ -94,6 +120,39 @@ function removeVideo(id) {
   playlist.splice(idx, 1);
   renderSidebar();
   toast('🗑 已移除：' + item.title);
+}
+
+function clearPlaylist() {
+  if (playlist.length === 0) return;
+  if (!window.confirm('确定清空播放队列？')) return;
+
+  for (var i = 0; i < playlist.length; i++) {
+    if (playlist[i]._blobUrl) {
+      try { URL.revokeObjectURL(playlist[i]._blobUrl); } catch (e) { /* ignore */ }
+    }
+  }
+
+  destroyMSEPipeline();
+  DOM.video.pause();
+  DOM.video.removeAttribute('src');
+  DOM.video.load();
+  playlist = [];
+  currentVideoId = '';
+  ui.currentVideoId = '';
+  playback.playing = false;
+  playback.currentTime = 0;
+  playback.duration = 0;
+  playback.isMSEMode = false;
+  DOM.mseBadge.classList.remove('visible');
+  renderPlayBtn();
+  renderSeekBar();
+  renderTimeBadge();
+  renderSidebar();
+  DOM.emptyState.classList.remove('hidden');
+  DOM.filmGrain.classList.remove('video-active');
+  updateTitlebar();
+  renderFavBtns();
+  toast('播放队列已清空');
 }
 
 /** Switch to a video by ID */
@@ -294,4 +353,3 @@ function cardCtxRemove() {
   if (_cardCtxTargetId) removeVideo(_cardCtxTargetId);
   closeCardCtx();
 }
-

@@ -85,7 +85,10 @@
     <div class="sb-divider"></div>
     <div class="sb-queue-header">
       <div class="sb-label">队列</div>
-      <button class="sb-add-btn" title="添加视频" onclick="openAddVideoModal()">+</button>
+      <div class="sb-queue-actions">
+        <button class="sb-action-btn" title="清空队列" onclick="clearPlaylist()">清空</button>
+        <button class="sb-add-btn" title="添加视频" onclick="openAddVideoModal()">+</button>
+      </div>
     </div>
     <div class="video-list" id="videoList">
       <!-- Video cards will be dynamically rendered -->
