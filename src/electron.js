@@ -156,6 +156,10 @@ function initElectronIntegration() {
     }
   });
 
+  if (window.electronAPI.rendererReady) {
+    window.electronAPI.rendererReady();
+  }
+
   // ── Handle menu bar actions ──
   window.electronAPI.onMenuAction(function (action) {
     switch (action) {

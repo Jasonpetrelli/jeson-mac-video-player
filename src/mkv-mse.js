@@ -60,11 +60,12 @@ async function loadViaMSE(item) {
     var mkvInfo = parseMKV(arrayBuffer);
     if (!mkvInfo || mkvInfo.tracks.length === 0) {
       hideMSELoading();
-      _pendingAutoPlay = false;
       toast('⚠ 无法解析此 MKV 文件');
       // Fallback: try native playback
+      _pendingAutoPlay = true;
       DOM.video.src = item.url;
       DOM.video.load();
+      videoPlay();
       return;
     }
 
@@ -102,12 +103,12 @@ async function loadViaMSE(item) {
         console.warn('[Prism MSE] Video codec not supported by MSE, falling back to native playback');
         item._mseUnsupported = true;
         hideMSELoading();
-        _pendingAutoPlay = false;
         playback.isMSEMode = false;
         if (IS_ELECTRON && item._filePath && (!item.url || item.unavailable)) {
           item.url = getLocalFileURL(item._filePath);
           item.unavailable = false;
         }
+        _pendingAutoPlay = true;
         DOM.video.src = item.url;
         DOM.video.load();
         videoPlay();
@@ -153,6 +154,7 @@ async function loadViaMSE(item) {
     // Fallback: try native
     try {
       item._mseUnsupported = true;
+      _pendingAutoPlay = true;
       DOM.video.src = item.url;
       DOM.video.load();
       videoPlay();

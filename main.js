@@ -3,6 +3,8 @@ const path = require('path');
 const fs = require('fs');
 const { pathToFileURL } = require('url');
 
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
+
 // ── Globals ──
 
 /** @type {BrowserWindow | null} */
@@ -13,6 +15,9 @@ let initialFilePath = null;
 
 /** Pending open-file event that fires before app is ready */
 let pendingFilePath = null;
+
+/** Whether renderer has registered IPC listeners */
+let rendererReady = false;
 
 // ── Window Creation ──
 
@@ -47,10 +52,8 @@ function createWindow() {
     // If a file was passed at launch, send it to the renderer
     if (pendingFilePath) {
       openFileInRenderer(pendingFilePath);
-      pendingFilePath = null;
     } else if (initialFilePath) {
       openFileInRenderer(initialFilePath);
-      initialFilePath = null;
     }
   });
 
@@ -65,6 +68,7 @@ function createWindow() {
 
   mainWindow.on('closed', function () {
     mainWindow = null;
+    rendererReady = false;
   });
 }
 
@@ -91,18 +95,22 @@ function openFileInRenderer(filePath) {
 
   showMainWindow();
 
-  if (mainWindow.webContents.isLoading()) {
+  if (mainWindow.webContents.isLoading() || !rendererReady) {
     pendingFilePath = filePath;
     mainWindow.webContents.once('did-finish-load', function () {
-      if (pendingFilePath) {
-        mainWindow.webContents.send('open-file', pendingFilePath);
-        pendingFilePath = null;
-      }
+      flushPendingFileOpen();
     });
     return;
   }
 
   mainWindow.webContents.send('open-file', filePath);
+}
+
+function flushPendingFileOpen() {
+  if (!mainWindow || mainWindow.isDestroyed() || !rendererReady || !pendingFilePath) return;
+  var fp = pendingFilePath;
+  pendingFilePath = null;
+  mainWindow.webContents.send('open-file', fp);
 }
 
 // ── App Lifecycle ──
@@ -126,11 +134,16 @@ app.on('open-file', function (event, filePath) {
 });
 
 // Capture file path from command-line arguments (e.g., `prism-player /path/to/video.mkv`)
-if (process.argv.length > 1) {
-  var candidatePath = process.argv[1];
-  if (candidatePath && !candidatePath.startsWith('-')) {
-    initialFilePath = candidatePath;
-  }
+for (var argIndex = 1; argIndex < process.argv.length; argIndex++) {
+  var candidatePath = process.argv[argIndex];
+  if (!candidatePath || candidatePath.startsWith('-')) continue;
+
+  try {
+    if (fs.existsSync(candidatePath) && fs.statSync(candidatePath).isFile()) {
+      initialFilePath = candidatePath;
+      break;
+    }
+  } catch (err) {}
 }
 
 // ── IPC Handlers ──
@@ -185,12 +198,19 @@ ipcMain.handle('get-file-url', function (event, filePath) {
 
 /** Get the initial file path passed at app launch */
 ipcMain.handle('get-initial-file', function () {
-  if (initialFilePath) {
-    var fp = initialFilePath;
+  var fp = initialFilePath || pendingFilePath;
+  initialFilePath = null;
+  pendingFilePath = null;
+  return fp || null;
+});
+
+ipcMain.handle('renderer-ready', function () {
+  rendererReady = true;
+  if (initialFilePath && !pendingFilePath) {
+    pendingFilePath = initialFilePath;
     initialFilePath = null;
-    return fp;
   }
-  return null;
+  flushPendingFileOpen();
 });
 
 /** Show file in Finder / Explorer */

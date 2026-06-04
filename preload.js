@@ -87,6 +87,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return ipcRenderer.invoke('get-initial-file');
   },
 
+  /** Notify main process that renderer listeners are ready */
+  rendererReady: function () {
+    return ipcRenderer.invoke('renderer-ready');
+  },
+
   // ── Event Listeners ──
 
   /**
