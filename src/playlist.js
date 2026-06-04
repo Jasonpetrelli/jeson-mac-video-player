@@ -247,7 +247,7 @@ function switchToVideo(id) {
   ui.currentVideoId = id;
 
   // Determine if this file needs MSE playback (MKV/WebM via demux)
-  if (item._needsMSE && !item._mseUnsupported && (item._fileRef || (IS_ELECTRON && item._filePath))) {
+  if (item._needsMSE && (item._fileRef || (IS_ELECTRON && item._filePath))) {
     // MSE path — load MKV via demux + fMP4 remux pipeline
     loadViaMSE(item);
     return;

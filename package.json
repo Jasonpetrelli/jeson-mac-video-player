@@ -11,5 +11,8 @@
   "devDependencies": {
     "electron": "28.3.3",
     "electron-builder": "^24.9.0"
+  },
+  "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "1.1.0"
   }
 }

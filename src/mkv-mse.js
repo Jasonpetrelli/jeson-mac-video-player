@@ -23,6 +23,29 @@ function hideMSELoading() {
   DOM.mkvLoading.classList.remove('visible');
 }
 
+function needsAudioTranscode(audioTrack) {
+  return !!(audioTrack && (audioTrack.codecID === 'A_EAC3' || audioTrack.codecID === 'A_AC3'));
+}
+
+async function loadNativeFallback(item, audioTrack) {
+  playback.isMSEMode = false;
+  if (DOM.mseBadge) DOM.mseBadge.classList.remove('visible');
+
+  if (IS_ELECTRON && item._filePath && needsAudioTranscode(audioTrack) && window.electronAPI.transcodeAudioForPlayback) {
+    showMSELoading('正在转换音频…', '首次播放杜比音轨需要处理一次，之后会直接复用缓存');
+    var compatiblePath = await window.electronAPI.transcodeAudioForPlayback(item._filePath);
+    item.url = getLocalFileURL(compatiblePath);
+    item._transcodedPath = compatiblePath;
+    item.unavailable = !item.url;
+    hideMSELoading();
+  }
+
+  _pendingAutoPlay = true;
+  DOM.video.src = item.url;
+  DOM.video.load();
+  videoPlay();
+}
+
 /** Main entry: load a video item via MSE pipeline */
 async function loadViaMSE(item) {
   // Check MSE availability
@@ -62,10 +85,8 @@ async function loadViaMSE(item) {
       hideMSELoading();
       toast('⚠ 无法解析此 MKV 文件');
       // Fallback: try native playback
-      _pendingAutoPlay = true;
-      DOM.video.src = item.url;
-      DOM.video.load();
-      videoPlay();
+      item._mseUnsupported = true;
+      await loadNativeFallback(item, audioTrack);
       return;
     }
 
@@ -108,10 +129,7 @@ async function loadViaMSE(item) {
           item.url = getLocalFileURL(item._filePath);
           item.unavailable = false;
         }
-        _pendingAutoPlay = true;
-        DOM.video.src = item.url;
-        DOM.video.load();
-        videoPlay();
+        await loadNativeFallback(item, audioTrack);
         return;
       }
     }
@@ -154,10 +172,7 @@ async function loadViaMSE(item) {
     // Fallback: try native
     try {
       item._mseUnsupported = true;
-      _pendingAutoPlay = true;
-      DOM.video.src = item.url;
-      DOM.video.load();
-      videoPlay();
+      await loadNativeFallback(item, audioTrack);
     } catch (e) { /* ignore */ }
   }
 }

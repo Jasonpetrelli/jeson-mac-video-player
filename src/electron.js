@@ -12,6 +12,8 @@ function addLocalFileFromPath(filePath) {
     duplicate.unavailable = false;
     duplicate._filePath = filePath;
     duplicate.url = getLocalFileURL(filePath);
+    duplicate._mseUnsupported = false;
+    duplicate._transcodedPath = null;
     duplicate.favorite = isFavoriteItem(duplicate);
     toast('已在队列中：' + duplicate.title);
     renderSidebar();

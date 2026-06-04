@@ -92,6 +92,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return ipcRenderer.invoke('renderer-ready');
   },
 
+  /**
+   * Convert unsupported local audio codecs to a playable AAC track.
+   * @param {string} filePath - Absolute path to the source video
+   * @returns {Promise<string>} Absolute path to the cached compatible video
+   */
+  transcodeAudioForPlayback: function (filePath) {
+    return ipcRenderer.invoke('transcode-audio-for-playback', filePath);
+  },
+
   // ── Event Listeners ──
 
   /**

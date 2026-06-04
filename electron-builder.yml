@@ -1,5 +1,7 @@
 appId: com.prism.player
 productName: Prism Player
+asarUnpack:
+  - node_modules/@ffmpeg-installer/**
 mac:
   category: public.app-category.video
   target:

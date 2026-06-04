@@ -1,7 +1,10 @@
 const { app, BrowserWindow, dialog, ipcMain, Menu, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
+const { spawn } = require('child_process');
 const { pathToFileURL } = require('url');
+const ffmpeg = require('@ffmpeg-installer/ffmpeg');
 
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 
@@ -18,6 +21,75 @@ let pendingFilePath = null;
 
 /** Whether renderer has registered IPC listeners */
 let rendererReady = false;
+
+/** In-flight audio transcode jobs keyed by source file metadata */
+let transcodeAudioJobs = {};
+
+function getFfmpegPath() {
+  return ffmpeg.path.replace('app.asar', 'app.asar.unpacked');
+}
+
+async function getTranscodedAudioPath(filePath) {
+  var stats = await fs.promises.stat(filePath);
+  var key = crypto
+    .createHash('sha1')
+    .update(filePath + ':' + stats.size + ':' + stats.mtime.getTime())
+    .digest('hex');
+  var outDir = path.join(app.getPath('userData'), 'audio-transcode-cache');
+  var outPath = path.join(outDir, key + '.mp4');
+  var tmpPath = path.join(outDir, key + '.part.mp4');
+
+  try {
+    var outStats = await fs.promises.stat(outPath);
+    if (outStats.size > 0) return outPath;
+  } catch (err) {}
+
+  if (!transcodeAudioJobs[key]) {
+    transcodeAudioJobs[key] = (async function () {
+      await fs.promises.mkdir(outDir, { recursive: true });
+      try { await fs.promises.unlink(tmpPath); } catch (err) {}
+
+      await new Promise(function (resolve, reject) {
+        var args = [
+          '-y',
+          '-i', filePath,
+          '-map', '0:v:0',
+          '-map', '0:a:0',
+          '-c:v', 'copy',
+          '-tag:v', 'hvc1',
+          '-c:a', 'aac',
+          '-ac', '2',
+          '-b:a', '192k',
+          '-map_metadata', '0',
+          '-movflags', '+faststart',
+          tmpPath
+        ];
+        var child = spawn(getFfmpegPath(), args);
+        var stderr = '';
+
+        child.stderr.on('data', function (chunk) {
+          stderr += chunk.toString();
+          if (stderr.length > 4000) stderr = stderr.slice(-4000);
+        });
+        child.on('error', reject);
+        child.on('close', function (code) {
+          if (code === 0) {
+            resolve();
+          } else {
+            reject(new Error(stderr || ('ffmpeg exited with code ' + code)));
+          }
+        });
+      });
+
+      await fs.promises.rename(tmpPath, outPath);
+      return outPath;
+    })().finally(function () {
+      delete transcodeAudioJobs[key];
+    });
+  }
+
+  return transcodeAudioJobs[key];
+}
 
 // ── Window Creation ──
 
@@ -211,6 +283,16 @@ ipcMain.handle('renderer-ready', function () {
     initialFilePath = null;
   }
   flushPendingFileOpen();
+});
+
+/** Convert unsupported local audio to AAC while copying video stream */
+ipcMain.handle('transcode-audio-for-playback', async function (event, filePath) {
+  try {
+    return await getTranscodedAudioPath(filePath);
+  } catch (err) {
+    console.error('[Prism] audio transcode failed:', err.message);
+    throw new Error('音频转换失败');
+  }
 });
 
 /** Show file in Finder / Explorer */
