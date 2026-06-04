@@ -29,6 +29,7 @@ function initDOMCache() {
   DOM.controlsOverlay  = document.getElementById('controlsOverlay');
   DOM.videoFrame       = document.getElementById('videoFrame');
   DOM.stage            = document.getElementById('stage');
+  DOM.sidebar          = document.querySelector('.sidebar');
   DOM.videoList        = document.getElementById('videoList');
   DOM.toastEl          = document.getElementById('toastEl');
   DOM.titlebarTitle    = document.getElementById('titlebarTitle');
@@ -54,4 +55,3 @@ function initDOMCache() {
   DOM.videoInfoPanel   = document.getElementById('videoInfoPanel');
   DOM.screenshotFlash  = document.getElementById('screenshotFlash');
 }
-
