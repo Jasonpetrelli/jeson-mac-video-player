@@ -86,14 +86,12 @@
 
     .traffic {
       display: flex;
+      width: 50px;
       gap: 7px;
       -webkit-app-region: no-drag;
     }
     .dot {
-      width: 12px; height: 12px;
-      border-radius: 50%;
-      cursor: pointer;
-      transition: filter var(--dur-fast);
+      display: none;
     }
     .dot:hover { filter: brightness(1.25); }
     .dot.c { background: #FF5F57; }
