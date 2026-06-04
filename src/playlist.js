@@ -214,6 +214,27 @@ function clearPlaylist() {
   toast('播放队列已清空');
 }
 
+function getVideoResumeTime(item) {
+  if (!item) return null;
+  if (item.lastPosition && item.lastPosition > 2) {
+    return item.lastPosition;
+  }
+  if (item.progress > 0 && item.duration > 0) {
+    return item.progress * item.duration;
+  }
+  return null;
+}
+
+function restoreVideoPositionWhenReady(item) {
+  var seekTarget = getVideoResumeTime(item);
+  if (!seekTarget || seekTarget <= 2) return;
+
+  DOM.video.addEventListener('loadedmetadata', function onMeta() {
+    DOM.video.currentTime = seekTarget;
+    DOM.video.removeEventListener('loadedmetadata', onMeta);
+  });
+}
+
 /** Switch to a video by ID */
 function switchToVideo(id) {
   var item = playlist.find(function(v) { return v.id === id; });
@@ -276,20 +297,7 @@ function switchToVideo(id) {
   DOM.video.load();
 
   // Restore last playback position automatically
-  var seekTarget = null;
-  if (item.lastPosition && item.lastPosition > 2 && item.duration > 0) {
-    seekTarget = item.lastPosition;
-  } else if (item.progress > 0 && item.duration > 0) {
-    // Fallback to progress percentage
-    seekTarget = item.progress * item.duration;
-  }
-
-  if (seekTarget && seekTarget > 2) {
-    DOM.video.addEventListener('loadedmetadata', function onMeta() {
-      DOM.video.currentTime = seekTarget;
-      DOM.video.removeEventListener('loadedmetadata', onMeta);
-    });
-  }
+  restoreVideoPositionWhenReady(item);
 
   // Update last played
   item.lastPlayedAt = Date.now();

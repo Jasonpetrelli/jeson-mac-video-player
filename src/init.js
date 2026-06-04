@@ -160,7 +160,7 @@ function initVideo() {
   DOM.video.playbackRate = playback.playbackRate;
 }
 
-function onBeforeUnload() {
+function persistAppState() {
   // Save current video's playback position
   savePlaybackPosition();
 
@@ -236,6 +236,10 @@ function onBeforeUnload() {
     } : null
   };
   storageSave(data);
+}
+
+function onBeforeUnload() {
+  persistAppState();
 }
 
 /* ── Boot ── */

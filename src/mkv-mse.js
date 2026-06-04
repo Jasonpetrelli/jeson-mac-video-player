@@ -43,6 +43,7 @@ async function loadNativeFallback(item, audioTrack) {
   _pendingAutoPlay = true;
   DOM.video.src = item.url;
   DOM.video.load();
+  restoreVideoPositionWhenReady(item);
   videoPlay();
 }
 

@@ -44,7 +44,11 @@ function savePlaybackPosition() {
 function startAutoSave() {
   if (_autoSaveTimer) return;
   _autoSaveTimer = setInterval(function() {
-    savePlaybackPosition();
+    if (typeof persistAppState === 'function') {
+      persistAppState();
+    } else {
+      savePlaybackPosition();
+    }
   }, AUTO_SAVE_INTERVAL);
 }
 
