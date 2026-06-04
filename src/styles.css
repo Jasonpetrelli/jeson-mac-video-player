@@ -699,31 +699,47 @@
 
     .seekbar {
       flex: 1;
-      height: 4px;
-      background: oklch(100% 0 0 / 0.15);
+      height: 16px;
       border-radius: 2px;
       cursor: pointer;
       position: relative;
+    }
+    .seekbar::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 4px;
+      transform: translateY(-50%);
+      background: oklch(100% 0 0 / 0.15);
+      border-radius: 2px;
       transition: height var(--dur-fast);
     }
-    .seekbar:hover { height: 6px; }
+    .seekbar:hover::before { height: 6px; }
 
     .seekbar-buf {
       position: absolute;
-      top: 0; left: 0;
-      height: 100%;
+      top: 50%; left: 0;
+      height: 4px;
+      transform: translateY(-50%);
       background: oklch(100% 0 0 / 0.12);
       border-radius: 2px;
       width: 0%;
+      transition: height var(--dur-fast);
     }
     .seekbar-fill {
       position: absolute;
-      top: 0; left: 0;
-      height: 100%;
+      top: 50%; left: 0;
+      height: 4px;
+      transform: translateY(-50%);
       background: linear-gradient(90deg, var(--accent), oklch(75% 0.18 300));
       border-radius: 2px;
       width: 0%;
+      transition: height var(--dur-fast);
     }
+    .seekbar:hover .seekbar-buf,
+    .seekbar:hover .seekbar-fill { height: 6px; }
     .seekbar-thumb {
       position: absolute;
       right: -6px;
@@ -782,12 +798,14 @@
     /* Chapter markers on seekbar */
     .seek-chapter {
       position: absolute;
-      top: -3px; bottom: -3px;
+      top: 50%;
+      height: 10px;
       width: 2px;
       background: oklch(80% 0.06 240 / 0.6);
       border-radius: 1px;
       pointer-events: none;
       z-index: 1;
+      transform: translateY(-50%);
     }
     .seek-chapter-tooltip {
       position: absolute;
@@ -809,12 +827,13 @@
     /* Hover position line */
     .seek-line {
       position: absolute;
-      top: -4px; bottom: -4px;
+      top: 50%;
+      height: 14px;
       width: 1.5px;
       background: var(--accent);
       opacity: 0;
       pointer-events: none;
-      transform: translateX(-50%);
+      transform: translate(-50%, -50%);
       transition: opacity 0.1s;
     }
     .seekbar:hover .seek-line { opacity: 0.7; }
@@ -1518,13 +1537,14 @@
     /* ── §23 A-B Loop Markers on Seekbar ── */
     .ab-marker {
       position: absolute;
-      top: 0;
-      bottom: 0;
+      top: 50%;
+      height: 12px;
       width: 2px;
       background: var(--accent);
       z-index: 3;
       pointer-events: none;
       opacity: 0.9;
+      transform: translateY(-50%);
     }
     .ab-marker::after {
       content: attr(data-label);
@@ -1539,11 +1559,12 @@
     }
     .ab-range-fill {
       position: absolute;
-      top: 0;
-      bottom: 0;
+      top: 50%;
+      height: 6px;
       background: var(--accent-glow);
       z-index: 2;
       pointer-events: none;
+      transform: translateY(-50%);
     }
 
     /* ── Screenshot Flash Animation ── */
@@ -1667,7 +1688,6 @@
     .app.mini-mode .controls-overlay .ctrl-row [title="字幕"],
     .app.mini-mode .controls-overlay .ctrl-row [title="收藏"],
     .app.mini-mode .controls-overlay .ctrl-row [title="画中画"],
-    .app.mini-mode .controls-overlay .ctrl-row [title="AirPlay"],
     .app.mini-mode .controls-overlay .ctrl-row [title="全屏"] {
       display: none !important;
     }
