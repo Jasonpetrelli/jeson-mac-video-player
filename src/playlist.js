@@ -47,6 +47,27 @@ function cloneVideoForFavorite(item) {
   return copy;
 }
 
+function ensurePlaylistItemFromFavorite(item) {
+  var key = getVideoKey(item);
+  var existing = playlist.find(function(v) { return getVideoKey(v) === key; });
+  if (existing) {
+    existing.favorite = true;
+    existing.duration = item.duration || existing.duration;
+    existing.progress = item.progress || existing.progress;
+    existing.lastPosition = item.lastPosition || existing.lastPosition;
+    existing.lastPlayedAt = item.lastPlayedAt || existing.lastPlayedAt;
+    return existing;
+  }
+
+  var copy = Object.assign({}, item);
+  copy.id = generateId();
+  copy.favorite = true;
+  copy._blobUrl = null;
+  copy._fileRef = null;
+  playlist.push(copy);
+  return copy;
+}
+
 /** Create a VideoItem from a local File object */
 function addLocalFile(file) {
   var filePath = getLocalFilePath(file);
@@ -195,8 +216,13 @@ function clearPlaylist() {
 
 /** Switch to a video by ID */
 function switchToVideo(id) {
-  const item = playlist.find(function(v) { return v.id === id; }) ||
-    favorites.find(function(v) { return v.id === id; });
+  var item = playlist.find(function(v) { return v.id === id; });
+  if (!item) {
+    var favoriteItem = favorites.find(function(v) { return v.id === id; });
+    if (favoriteItem) {
+      item = ensurePlaylistItemFromFavorite(favoriteItem);
+    }
+  }
   if (!item) return;
 
   // If item is unavailable (blob URL expired), notify user

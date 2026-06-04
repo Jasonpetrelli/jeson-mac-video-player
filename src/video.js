@@ -102,6 +102,9 @@ function onLoadedMetadata() {
   // Update duration in playlist item
   if (currentVideoId) {
     updateVideoDuration(currentVideoId, playback.duration);
+    var item = playlist.find(function(v) { return v.id === currentVideoId; }) ||
+      favorites.find(function(v) { return v.id === currentVideoId; });
+    generateItemThumbnail(item);
   }
 
   // Update titlebar
@@ -202,4 +205,3 @@ function videoSetRate(rate) {
   playback.playbackRate = rate;
   DOM.video.playbackRate = rate;
 }
-

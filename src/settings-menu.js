@@ -160,7 +160,6 @@ function setNav(el) {
   if (text.includes('全部')) ui.sidebarFilter = 'all';
   else if (text.includes('最近')) ui.sidebarFilter = 'recent';
   else if (text.includes('收藏')) ui.sidebarFilter = 'favorites';
-  else if (text.includes('看完')) ui.sidebarFilter = 'finished';
 
   renderSidebar();
 }

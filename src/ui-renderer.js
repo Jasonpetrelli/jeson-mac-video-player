@@ -104,9 +104,7 @@ function renderSidebar() {
   }
 
   // Apply nav filter
-  if (ui.sidebarFilter === 'finished') {
-    items = items.filter(function(v) { return v.progress >= 1; });
-  } else if (ui.sidebarFilter === 'recent') {
+  if (ui.sidebarFilter === 'recent') {
     items = items.filter(function(v) { return v.lastPlayedAt > 0; });
     items.sort(function(a, b) { return b.lastPlayedAt - a.lastPlayedAt; });
   }
@@ -220,6 +218,7 @@ function renderSidebar() {
 
     card.innerHTML =
       '<div class="video-thumb ' + sceneClasses[sceneIdx] + '">' +
+        (item.thumbnail ? '<img class="video-thumb-img" src="' + item.thumbnail + '" alt="">' : '') +
         '<span class="thumb-idx">' + (playlistIdx + 1) + '</span>' +
         '<div class="thumb-duration">' + durationStr + '</div>' +
         '<div class="thumb-progress" style="width:' + progressPct + '%"></div>' +

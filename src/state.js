@@ -31,7 +31,7 @@ const settings = {
 const ui = {
   controlsVisible: true,
   currentVideoId: '',
-  sidebarFilter: 'all',    // 'all' | 'recent' | 'favorites' | 'finished'
+  sidebarFilter: 'all',    // 'all' | 'recent' | 'favorites'
   favFilterActive: false,  // Quick toggle for favorites-only in sidebar
   rightPanelOpen: false,
   rightPanelTab: 'history',
