@@ -5619,7 +5619,9 @@ function getCodecMime(codecID, track) {
     'A_VORBIS':          'audio/webm; codecs="vorbis"',
     'A_OPUS':            'audio/webm; codecs="opus"',
     'A_FLAC':            'audio/mp4; codecs="flac"',
-    'A_ALAC':            'audio/mp4; codecs="alac"'
+    'A_ALAC':            'audio/mp4; codecs="alac"',
+    'A_EAC3':            'audio/mp4; codecs="ec-3"',
+    'A_AC3':             'audio/mp4; codecs="ac-3"'
   };
   return map[codecID] || null;
 }
@@ -5890,14 +5892,24 @@ async function loadViaMSE(item) {
     var audioMime = audioTrack ? getCodecMime(audioTrack.codecID, audioTrack) : null;
 
     if (videoTrack && videoMime) {
-      // Determine container type
       var containerType = isWebMCodec(videoTrack.codecID) ? 'webm' : 'mp4';
       var fullVideoMime = containerType === 'webm'
         ? 'video/webm; codecs="' + videoMime.split('"')[1] + '"'
         : videoMime;
       console.log('[Prism MSE] _initMSE videoMime:', videoMime, 'fullVideoMime:', fullVideoMime, 'isTypeSupported:', MediaSource.isTypeSupported(fullVideoMime));
       if (!MediaSource.isTypeSupported(fullVideoMime)) {
-        console.warn('[Prism MSE] isTypeSupported returned false, attempting MSE anyway...');
+        console.warn('[Prism MSE] Video codec not supported by MSE, falling back to native playback');
+        hideMSELoading();
+        _pendingAutoPlay = false;
+        playback.isMSEMode = false;
+        if (IS_ELECTRON && item._filePath && (!item.url || item.unavailable)) {
+          item.url = 'file://' + item._filePath;
+          item.unavailable = false;
+        }
+        DOM.video.src = item.url;
+        DOM.video.load();
+        videoPlay();
+        return;
       }
     }
 
