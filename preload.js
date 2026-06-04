@@ -126,6 +126,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return ipcRenderer.invoke('window-close');
   },
 
+  /** Hide the window */
+  hide: function () {
+    return ipcRenderer.invoke('window-hide');
+  },
+
+  /** Show the window */
+  show: function () {
+    return ipcRenderer.invoke('window-show');
+  },
+
   /** Check if the window is currently maximized */
   isMaximized: function () {
     return ipcRenderer.invoke('window-is-maximized');

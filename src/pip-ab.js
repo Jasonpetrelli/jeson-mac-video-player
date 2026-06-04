@@ -9,6 +9,7 @@ function togglePiP() {
   }
   if (document.pictureInPictureElement) {
     document.exitPictureInPicture().then(function() {
+      showMainWindowAfterPiP();
       showKbd('⧉ 退出画中画');
       toast('⧉ 已退出画中画');
     }).catch(function() {
@@ -16,6 +17,7 @@ function togglePiP() {
     });
   } else {
     video.requestPictureInPicture().then(function() {
+      hideMainWindowForPiP();
       showKbd('⧉ 画中画');
       toast('⧉ 画中画模式');
     }).catch(function() {
@@ -23,6 +25,22 @@ function togglePiP() {
     });
   }
 }
+
+function hideMainWindowForPiP() {
+  if (IS_ELECTRON && window.electronAPI && window.electronAPI.hide) {
+    window.electronAPI.hide();
+  }
+}
+
+function showMainWindowAfterPiP() {
+  if (IS_ELECTRON && window.electronAPI && window.electronAPI.show) {
+    window.electronAPI.show();
+  }
+}
+
+document.addEventListener('leavepictureinpicture', function() {
+  showMainWindowAfterPiP();
+});
 
 /* ── A-B Loop ── */
 
@@ -252,4 +270,3 @@ function hideVideoInfoPanel() {
   clearTimeout(videoInfoTimer);
   DOM.videoInfoPanel.classList.remove('show');
 }
-

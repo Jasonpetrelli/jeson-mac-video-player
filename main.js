@@ -196,6 +196,19 @@ ipcMain.handle('window-close', function () {
   if (mainWindow) mainWindow.close();
 });
 
+/** Window control: hide */
+ipcMain.handle('window-hide', function () {
+  if (mainWindow) mainWindow.hide();
+});
+
+/** Window control: show */
+ipcMain.handle('window-show', function () {
+  if (mainWindow) {
+    mainWindow.show();
+    mainWindow.focus();
+  }
+});
+
 /** Check if window is maximized */
 ipcMain.handle('window-is-maximized', function () {
   return mainWindow ? mainWindow.isMaximized() : false;

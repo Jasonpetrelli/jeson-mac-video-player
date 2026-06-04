@@ -98,6 +98,10 @@ function onKeyDown(e) {
       }
       break;
 
+    case 'l': case 'L':
+      togglePiP();
+      break;
+
     case '[':
       setABPoint('a');
       break;
@@ -168,4 +172,3 @@ function onKeyUp(e) {
     arrowHoldSpeed = 10;
   }
 }
-
