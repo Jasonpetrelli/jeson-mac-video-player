@@ -132,32 +132,40 @@ function removeVideo(id) {
 
 function clearPlaylist() {
   if (playlist.length === 0) return;
-  if (!window.confirm('确定清空播放队列？')) return;
+  if (!window.confirm('确定清空播放队列？收藏的视频会保留。')) return;
 
   for (var i = 0; i < playlist.length; i++) {
-    if (playlist[i]._blobUrl) {
+    if (!playlist[i].favorite && playlist[i]._blobUrl) {
       try { URL.revokeObjectURL(playlist[i]._blobUrl); } catch (e) { /* ignore */ }
     }
   }
 
-  destroyMSEPipeline();
-  DOM.video.pause();
-  DOM.video.removeAttribute('src');
-  DOM.video.load();
-  playlist = [];
-  currentVideoId = '';
-  ui.currentVideoId = '';
-  playback.playing = false;
-  playback.currentTime = 0;
-  playback.duration = 0;
-  playback.isMSEMode = false;
-  DOM.mseBadge.classList.remove('visible');
-  renderPlayBtn();
-  renderSeekBar();
-  renderTimeBadge();
+  var removedCurrent = currentVideoId && playlist.some(function(v) {
+    return v.id === currentVideoId && !v.favorite;
+  });
+
+  playlist = playlist.filter(function(v) { return v.favorite; });
+
+  if (removedCurrent) {
+    destroyMSEPipeline();
+    DOM.video.pause();
+    DOM.video.removeAttribute('src');
+    DOM.video.load();
+    currentVideoId = '';
+    ui.currentVideoId = '';
+    playback.playing = false;
+    playback.currentTime = 0;
+    playback.duration = 0;
+    playback.isMSEMode = false;
+    DOM.mseBadge.classList.remove('visible');
+    renderPlayBtn();
+    renderSeekBar();
+    renderTimeBadge();
+    DOM.emptyState.classList.remove('hidden');
+    DOM.filmGrain.classList.remove('video-active');
+  }
+
   renderSidebar();
-  DOM.emptyState.classList.remove('hidden');
-  DOM.filmGrain.classList.remove('video-active');
   updateTitlebar();
   renderFavBtns();
   toast('播放队列已清空');
