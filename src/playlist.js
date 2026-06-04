@@ -54,7 +54,8 @@ function addLocalFile(file) {
     _filePath: filePath,
     _fileName: file.name,
     _fileSize: file.size,
-    _fileLastModified: file.lastModified
+    _fileLastModified: file.lastModified,
+    _mseUnsupported: false
   };
   playlist.push(item);
   renderSidebar();
@@ -182,7 +183,7 @@ function switchToVideo(id) {
   ui.currentVideoId = id;
 
   // Determine if this file needs MSE playback (MKV/WebM via demux)
-  if (item._needsMSE && (item._fileRef || (IS_ELECTRON && item._filePath))) {
+  if (item._needsMSE && !item._mseUnsupported && (item._fileRef || (IS_ELECTRON && item._filePath))) {
     // MSE path — load MKV via demux + fMP4 remux pipeline
     loadViaMSE(item);
     return;

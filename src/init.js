@@ -43,6 +43,7 @@ function initState() {
           v._fileName = v._fileName || null;
           v._fileSize = v._fileSize || null;
           v._fileLastModified = v._fileLastModified || null;
+          v._mseUnsupported = v._mseUnsupported === true;
           playlist.push(v);
         }
       });
@@ -62,6 +63,8 @@ function bindEvents() {
   DOM.videoFrame.addEventListener('mousemove', onMouseMove);
   DOM.videoFrame.addEventListener('click', onStageClick);
   DOM.videoFrame.addEventListener('dblclick', onStageDblClick);
+  DOM.controlsOverlay.addEventListener('mouseenter', onControlsMouseEnter);
+  DOM.controlsOverlay.addEventListener('mouseleave', onControlsMouseLeave);
 
   // Volume slider
   DOM.volSlider.addEventListener('click', function(e) {
@@ -125,7 +128,8 @@ function onBeforeUnload() {
       _filePath: v._filePath || null,  // Electron: persist absolute file path
       _fileName: v._fileName || null,
       _fileSize: v._fileSize || null,
-      _fileLastModified: v._fileLastModified || null
+      _fileLastModified: v._fileLastModified || null,
+      _mseUnsupported: v._mseUnsupported === true
     };
   });
 

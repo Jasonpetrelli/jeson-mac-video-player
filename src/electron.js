@@ -39,7 +39,8 @@ function addLocalFileFromPath(filePath) {
     _needsMSE: isMKV,
     _fileRef: null,
     _filePath: filePath,
-    _fileName: fileName
+    _fileName: fileName,
+    _mseUnsupported: false
   };
   playlist.push(item);
   renderSidebar();

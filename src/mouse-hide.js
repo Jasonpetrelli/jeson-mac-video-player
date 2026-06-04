@@ -4,6 +4,19 @@ const AUTO_HIDE_DELAY = 2500;
 
 function onMouseMove() {
   showControls();
+  if (isMouseInControls()) {
+    clearTimeout(hideTimer);
+    return;
+  }
+  scheduleAutoHide();
+}
+
+function onControlsMouseEnter() {
+  showControls();
+  clearTimeout(hideTimer);
+}
+
+function onControlsMouseLeave() {
   scheduleAutoHide();
 }
 
@@ -24,3 +37,6 @@ function scheduleAutoHide() {
   }
 }
 
+function isMouseInControls() {
+  return DOM.controlsOverlay && DOM.controlsOverlay.matches(':hover');
+}

@@ -100,6 +100,7 @@ async function loadViaMSE(item) {
       console.log('[Prism MSE] _initMSE videoMime:', videoMime, 'fullVideoMime:', fullVideoMime, 'isTypeSupported:', MediaSource.isTypeSupported(fullVideoMime));
       if (!MediaSource.isTypeSupported(fullVideoMime)) {
         console.warn('[Prism MSE] Video codec not supported by MSE, falling back to native playback');
+        item._mseUnsupported = true;
         hideMSELoading();
         _pendingAutoPlay = false;
         playback.isMSEMode = false;
@@ -154,8 +155,10 @@ async function loadViaMSE(item) {
 
     // Fallback: try native
     try {
+      item._mseUnsupported = true;
       DOM.video.src = item.url;
       DOM.video.load();
+      videoPlay();
     } catch (e) { /* ignore */ }
   }
 }
@@ -801,4 +804,3 @@ function appendToBuffer(sourceBuffer, data) {
     }
   });
 }
-
