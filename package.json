@@ -1,0 +1,16 @@
+{
+  "name": "prism-player",
+  "version": "0.9.0",
+  "description": "Prism — macOS Video Player",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build:dmg": "electron-builder --mac dmg"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.0"
+  }
+}
