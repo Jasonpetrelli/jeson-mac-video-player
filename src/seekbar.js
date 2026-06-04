@@ -1,5 +1,6 @@
 
 let seekbarDragging = false;
+let lastSeekHoverTime = 0;
 
 function initSeekbar() {
   DOM.seekbar.addEventListener('mousedown', onSeekbarMouseDown);
@@ -77,6 +78,7 @@ function seekHover(e) {
   var r = DOM.seekbar.getBoundingClientRect();
   var pct = clamp((e.clientX - r.left) / r.width, 0, 1);
   var targetTime = pct * playback.duration;
+  lastSeekHoverTime = targetTime;
 
   // Update seek line position
   DOM.seekLine.style.left = (pct * 100) + '%';
@@ -92,6 +94,14 @@ function seekHover(e) {
 
   DOM.seekPreview.innerHTML = thumbHtml + '<div class="seek-preview-time">' + formatTime(targetTime) + '</div>';
   DOM.seekPreview.style.left = (pct * 100) + '%';
+
+  if (!thumbData) {
+    requestThumbnailAtTime(targetTime, function(dataUrl, capturedTime) {
+      if (Math.abs(lastSeekHoverTime - capturedTime) > 1) return;
+      DOM.seekPreview.innerHTML = '<img class="seek-thumb-img" src="' + dataUrl + '" alt="">' +
+        '<div class="seek-preview-time">' + formatTime(capturedTime) + '</div>';
+    });
+  }
 
   // Check chapter hover
   var chapterTooltip = DOM.seekbar.querySelector('.seek-chapter-tooltip');
@@ -118,4 +128,3 @@ function seekHover(e) {
     }
   }
 }
-

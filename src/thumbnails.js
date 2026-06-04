@@ -15,6 +15,36 @@ let thumbCtx = null;
 /** @type {HTMLVideoElement|null} Dedicated hidden video for thumbnail seeking (never touches DOM.video) */
 let _thumbVideoEl = null;
 
+let hoverThumbnailCache = {};
+let hoverThumbnailPending = {};
+let thumbnailSource = '';
+let hoverThumbnailVideo = null;
+let hoverThumbnailRequestId = 0;
+
+function getThumbnailSource() {
+  return DOM.video ? (DOM.video.currentSrc || DOM.video.src || '') : '';
+}
+
+function syncThumbnailSource() {
+  var src = getThumbnailSource();
+  if (src !== thumbnailSource) {
+    thumbnailSource = src;
+    thumbnailCache = [];
+    hoverThumbnailCache = {};
+    hoverThumbnailPending = {};
+    cleanupHoverThumbnailVideo();
+  }
+  return src;
+}
+
+function cleanupHoverThumbnailVideo() {
+  if (hoverThumbnailVideo) {
+    hoverThumbnailVideo.removeAttribute('src');
+    if (hoverThumbnailVideo.parentNode) hoverThumbnailVideo.parentNode.removeChild(hoverThumbnailVideo);
+    hoverThumbnailVideo = null;
+  }
+}
+
 /** Initialize thumbnail canvas */
 function initThumbCanvas() {
   thumbCanvas = document.createElement('canvas');
@@ -33,7 +63,7 @@ function generateThumbnails() {
   // If video is playing, defer — will retry on pause/ended
   if (playback.playing) return;
 
-  var currentSrc = DOM.video.currentSrc || DOM.video.src;
+  var currentSrc = syncThumbnailSource();
   if (!currentSrc || playback.isMSEMode) {
     // MSE mode: cannot clone src into separate video, skip thumbnails
     return;
@@ -124,6 +154,11 @@ function stopThumbnailGeneration() {
 
 /** Get thumbnail image for a given time position */
 function getThumbnailAtTime(time) {
+  syncThumbnailSource();
+
+  var hoverKey = getHoverThumbnailKey(time);
+  if (hoverThumbnailCache[hoverKey]) return hoverThumbnailCache[hoverKey];
+
   if (thumbnailCache.length === 0) return null;
 
   var index = Math.floor(time / thumbnailInterval);
@@ -133,3 +168,72 @@ function getThumbnailAtTime(time) {
   return thumbnailCache[index];
 }
 
+function getHoverThumbnailKey(time) {
+  return String(Math.max(0, Math.floor(time)));
+}
+
+function requestThumbnailAtTime(time, callback) {
+  if (!DOM.video || !playback.duration || playback.duration <= 0) return;
+  if (playback.isMSEMode) return;
+
+  var src = syncThumbnailSource();
+  if (!src) return;
+
+  var key = getHoverThumbnailKey(time);
+  if (hoverThumbnailCache[key]) {
+    callback(hoverThumbnailCache[key], time);
+    return;
+  }
+
+  hoverThumbnailRequestId++;
+  var requestId = hoverThumbnailRequestId;
+  hoverThumbnailPending = {};
+  hoverThumbnailPending[key] = true;
+  cleanupHoverThumbnailVideo();
+
+  var tv = document.createElement('video');
+  hoverThumbnailVideo = tv;
+  tv.style.cssText = 'position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;';
+  tv.muted = true;
+  tv.preload = 'auto';
+  tv.src = src;
+
+  function cleanup() {
+    hoverThumbnailPending[key] = false;
+    if (requestId === hoverThumbnailRequestId) {
+      cleanupHoverThumbnailVideo();
+    }
+  }
+
+  function capture() {
+    if (requestId !== hoverThumbnailRequestId) return;
+    tv.currentTime = clamp(time, 0, playback.duration);
+  }
+
+  tv.addEventListener('loadedmetadata', capture, { once: true });
+  tv.addEventListener('seeked', function() {
+    if (requestId !== hoverThumbnailRequestId) {
+      cleanup();
+      return;
+    }
+    try {
+      if (!thumbCanvas || !thumbCtx) initThumbCanvas();
+      thumbCtx.drawImage(tv, 0, 0, 160, 90);
+      var dataUrl = thumbCanvas.toDataURL('image/jpeg', 0.5);
+      hoverThumbnailCache[key] = dataUrl;
+      callback(dataUrl, time);
+    } catch (e) {
+      // Some sources cannot be drawn to canvas; keep the time-only preview.
+    }
+    cleanup();
+  }, { once: true });
+  tv.addEventListener('error', cleanup, { once: true });
+
+  document.body.appendChild(tv);
+  if (tv.readyState >= 1) capture();
+  setTimeout(function() {
+    if (requestId === hoverThumbnailRequestId && hoverThumbnailPending[key]) {
+      cleanup();
+    }
+  }, 3000);
+}
