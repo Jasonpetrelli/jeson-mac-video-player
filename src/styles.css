@@ -864,14 +864,28 @@
     }
     .vol-slider {
       width: 72px;
-      height: 3px;
-      background: oklch(100% 0 0 / 0.15);
+      height: 14px;
       border-radius: 2px;
       cursor: pointer;
       position: relative;
     }
+    .vol-slider::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 3px;
+      transform: translateY(-50%);
+      background: oklch(100% 0 0 / 0.15);
+      border-radius: 2px;
+    }
     .vol-fill {
-      height: 100%;
+      position: absolute;
+      left: 0;
+      top: 50%;
+      height: 3px;
+      transform: translateY(-50%);
       background: var(--t-2);
       border-radius: 2px;
       width: 80%;

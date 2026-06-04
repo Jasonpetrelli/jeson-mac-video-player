@@ -87,10 +87,44 @@ function bindEvents() {
   DOM.controlsOverlay.addEventListener('mouseleave', onControlsMouseLeave);
 
   // Volume slider
-  DOM.volSlider.addEventListener('click', function(e) {
+  let volumeDragging = false;
+  function updateVolumeFromPointer(e) {
     const r = DOM.volSlider.getBoundingClientRect();
     const pct = clamp((e.clientX - r.left) / r.width, 0, 1);
+    if (playback.muted && pct > 0) videoSetMuted(false);
     videoSetVolume(pct);
+    e.stopPropagation();
+  }
+
+  DOM.volSlider.addEventListener('click', function(e) {
+    updateVolumeFromPointer(e);
+  });
+  DOM.volSlider.addEventListener('pointerdown', function(e) {
+    volumeDragging = true;
+    DOM.volSlider.setPointerCapture(e.pointerId);
+    updateVolumeFromPointer(e);
+    e.preventDefault();
+  });
+  DOM.volSlider.addEventListener('pointermove', function(e) {
+    if (!volumeDragging) return;
+    updateVolumeFromPointer(e);
+    e.preventDefault();
+  });
+  DOM.volSlider.addEventListener('pointerup', function(e) {
+    volumeDragging = false;
+    DOM.volSlider.releasePointerCapture(e.pointerId);
+    e.stopPropagation();
+  });
+  DOM.volSlider.addEventListener('pointercancel', function() {
+    volumeDragging = false;
+  });
+  DOM.volSlider.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    var delta = e.deltaY < 0 ? 0.05 : -0.05;
+    var nextVolume = clamp(playback.volume + delta, 0, 1);
+    if (playback.muted && nextVolume > 0) videoSetMuted(false);
+    videoSetVolume(nextVolume);
   });
 
   // Close context menu and speed popup on outside click
