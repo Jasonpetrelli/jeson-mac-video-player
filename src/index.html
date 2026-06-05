@@ -1,627 +1,623 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Prism — Mac Video Player</title>
   <script src="https://cdn.jsdelivr.net/npm/mp4box@0.5.2/dist/mp4box.all.min.js"
-          onerror="window._mp4boxLoadFailed=true"></script>
+    onerror="window._mp4boxLoadFailed=true"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
 
-<div class="app" id="app">
+  <div class="app" id="app">
 
-  <!-- ══ TITLEBAR ══ -->
-  <div class="titlebar">
-    <div class="traffic">
-      <div class="dot c"></div>
-      <div class="dot m"></div>
-      <div class="dot x"></div>
-    </div>
-    <span class="titlebar-title" id="titlebarTitle">Prism</span>
-    <div class="tb-actions">
-      <button class="icon-btn" title="搜索" onclick="toast('🔍 搜索视频…')">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9">
-          <circle cx="6.5" cy="6.5" r="4.5"/><path d="m10 10 3 3"/>
-        </svg>
-      </button>
-      <button class="icon-btn" title="收藏" id="favBtn" onclick="toggleFav()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-        </svg>
-      </button>
-      <button class="icon-btn" title="播放记录" id="panelBtn" onclick="togglePanel()">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9">
-          <circle cx="8" cy="8" r="6"/><polyline points="8 4 8 8 11 10"/>
-        </svg>
-      </button>
-      <button class="icon-btn" title="画中画 (L)" onclick="togglePiP()">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9">
-          <rect x="1" y="2" width="14" height="12" rx="1.5"/>
-          <rect x="8" y="7" width="6" height="5" rx="1" fill="currentColor" opacity=".5" stroke="none"/>
-        </svg>
-      </button>
-      <button class="icon-btn" id="fullBtn" title="全屏" onclick="toggleFull()">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9">
-          <path d="M1 6V1h5M10 1h5v5M15 10v5h-5M6 15H1v-5"/>
-        </svg>
-      </button>
-    </div>
-  </div>
-
-  <!-- ══ SIDEBAR ══ -->
-  <div class="sidebar">
-    <div class="sb-search">
-      <span class="sb-search-icon">
-        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="6.5" cy="6.5" r="4.5"/><path d="m10 10 3 3"/>
-        </svg>
-      </span>
-      <input type="text" placeholder="搜索视频…" id="searchInput">
-      <button class="sb-fav-filter" id="favFilterBtn" title="仅看收藏" onclick="toggleFavFilter()">☆</button>
-    </div>
-
-    <div class="sb-section">
-      <div class="sb-label">媒体库</div>
-      <div class="nav-item active" onclick="setNav(this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="m8 21 4-4 4 4M12 17v4"/></svg>
-        全部视频
+    <!-- ══ TITLEBAR ══ -->
+    <div class="titlebar">
+      <div class="traffic">
+        <div class="dot c"></div>
+        <div class="dot m"></div>
+        <div class="dot x"></div>
       </div>
-      <div class="nav-item" onclick="setNav(this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-        最近播放
-      </div>
-      <div class="nav-item" onclick="setNav(this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-        收藏
-      </div>
-    </div>
-
-    <div class="sb-divider"></div>
-    <div class="sb-queue-header">
-      <div class="sb-label">队列</div>
-      <div class="sb-queue-actions">
-        <button class="sb-action-btn" title="清空队列" onclick="clearPlaylist()">清空</button>
-        <button class="sb-add-btn" title="添加视频" onclick="openAddVideoModal()">+</button>
-      </div>
-    </div>
-    <div class="video-list" id="videoList">
-      <!-- Video cards will be dynamically rendered -->
-    </div>
-  </div>
-
-  <!-- ══ STAGE ══ -->
-  <div class="stage" id="stage" oncontextmenu="showCtx(event)">
-
-    <!-- Video Frame -->
-    <div class="video-frame" id="videoFrame">
-
-      <!-- Scene — contains <video> and empty state -->
-      <div class="scene" id="scene">
-        <!-- Real video element -->
-        <video id="video" preload="metadata" playsinline></video>
-
-        <!-- Film grain overlay -->
-        <div class="film-grain" id="filmGrain"></div>
-
-        <!-- Empty state (shown when no video loaded) -->
-        <div class="empty-state" id="emptyState">
-          <!-- SVG space scene as part of empty state -->
-          <svg width="60%" height="60%" viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg" style="opacity:0.5; position: absolute;">
-            <g opacity="0.8">
-              <circle cx="80" cy="50" r="1" fill="white" opacity="0.9"/>
-              <circle cx="240" cy="30" r="1.5" fill="white" opacity="0.7"/>
-              <circle cx="400" cy="80" r="1" fill="white" opacity="0.8"/>
-              <circle cx="560" cy="20" r="1.2" fill="white" opacity="0.6"/>
-              <circle cx="720" cy="60" r="1" fill="white" opacity="0.9"/>
-              <circle cx="150" cy="120" r="0.8" fill="white" opacity="0.7"/>
-              <circle cx="350" cy="140" r="1.3" fill="white" opacity="0.8"/>
-              <circle cx="620" cy="110" r="1" fill="white" opacity="0.6"/>
-              <circle cx="50" cy="200" r="0.9" fill="white" opacity="0.8"/>
-              <circle cx="770" cy="170" r="1.1" fill="white" opacity="0.7"/>
-              <circle cx="300" cy="250" r="0.8" fill="white" opacity="0.9"/>
-              <circle cx="680" cy="280" r="1.2" fill="white" opacity="0.6"/>
-              <circle cx="470" cy="180" r="1" fill="white" opacity="0.8"/>
-              <circle cx="120" cy="320" r="0.9" fill="white" opacity="0.7"/>
-              <circle cx="500" cy="340" r="1.1" fill="white" opacity="0.8"/>
-              <circle cx="750" cy="310" r="1" fill="white" opacity="0.6"/>
-            </g>
-            <defs>
-              <radialGradient id="bhGrad" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stop-color="oklch(8% 0.05 280)"/>
-                <stop offset="60%" stop-color="oklch(15% 0.08 280)"/>
-                <stop offset="100%" stop-color="oklch(55% 0.18 285)" stop-opacity="0"/>
-              </radialGradient>
-              <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stop-color="transparent"/>
-                <stop offset="70%" stop-color="oklch(68% 0.20 290)" stop-opacity="0.25"/>
-                <stop offset="100%" stop-color="oklch(68% 0.20 290)" stop-opacity="0"/>
-              </radialGradient>
-            </defs>
-            <ellipse cx="400" cy="240" rx="180" ry="50" fill="url(#glowGrad)" opacity="0.6"/>
-            <circle cx="400" cy="240" r="85" fill="url(#bhGrad)"/>
-            <ellipse cx="400" cy="240" rx="110" ry="28" fill="none" stroke="oklch(70% 0.20 290)" stroke-width="3" opacity="0.5"/>
-            <ellipse cx="400" cy="240" rx="130" ry="22" fill="none" stroke="oklch(78% 0.16 305)" stroke-width="1.5" opacity="0.3"/>
-            <g transform="translate(190, 165) rotate(-12)">
-              <ellipse cx="0" cy="0" rx="28" ry="8" fill="oklch(80% 0.04 240)" opacity="0.9"/>
-              <ellipse cx="0" cy="0" rx="8" ry="4" fill="oklch(88% 0.03 240)"/>
-              <line x1="-20" y1="0" x2="-40" y2="-12" stroke="oklch(75% 0.04 240)" stroke-width="1.5" opacity="0.7"/>
-              <line x1="-20" y1="0" x2="-40" y2="12"  stroke="oklch(75% 0.04 240)" stroke-width="1.5" opacity="0.7"/>
-            </g>
+      <span class="titlebar-title" id="titlebarTitle">Prism</span>
+      <div class="tb-actions">
+        <button class="icon-btn" title="搜索" onclick="toast('🔍 搜索视频…')">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9">
+            <circle cx="6.5" cy="6.5" r="4.5" />
+            <path d="m10 10 3 3" />
           </svg>
-          <div style="position:relative; z-index:2; display:flex; flex-direction:column; align-items:center;">
-            <div class="empty-state-icon">🎬</div>
-            <div class="empty-state-text">拖放视频文件到窗口开始播放</div>
-            <div class="empty-state-hint">支持 MP4、MKV、WebM 格式</div>
-            <div class="empty-state-kbd">
-              也可以点击 <kbd>+</kbd> 按钮添加视频
-            </div>
-          </div>
-        </div>
+        </button>
+        <button class="icon-btn" title="收藏" id="favBtn" onclick="toggleFav()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+          </svg>
+        </button>
+        <button class="icon-btn" title="播放记录" id="panelBtn" onclick="togglePanel()">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9">
+            <circle cx="8" cy="8" r="6" />
+            <polyline points="8 4 8 8 11 10" />
+          </svg>
+        </button>
+        <button class="icon-btn" title="画中画 (L)" onclick="togglePiP()">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9">
+            <rect x="1" y="2" width="14" height="12" rx="1.5" />
+            <rect x="8" y="7" width="6" height="5" rx="1" fill="currentColor" opacity=".5" stroke="none" />
+          </svg>
+        </button>
+        <button class="icon-btn" id="fullBtn" title="全屏" onclick="toggleFull()">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9">
+            <path d="M1 6V1h5M10 1h5v5M15 10v5h-5M6 15H1v-5" />
+          </svg>
+        </button>
       </div>
-
-      <!-- Kbd hint -->
-      <div class="kbd-hint" id="kbdHint"></div>
-
-      <!-- Screenshot flash overlay -->
-      <div id="screenshotFlash" style="display:none;"></div>
-
-      <!-- Video Info Panel -->
-      <div class="video-info-panel" id="videoInfoPanel">
-        <div class="info-title" id="vinfoTitle">暂无视频信息</div>
-        <div id="vinfoBody"></div>
-      </div>
-
-      <!-- MKV loading overlay -->
-      <div class="mkv-loading" id="mkvLoading">
-        <div class="mkv-loading-spinner"></div>
-        <div class="mkv-loading-text" id="mkvLoadingText">正在解析 MKV 文件…</div>
-        <div class="mkv-loading-sub" id="mkvLoadingSub"></div>
-      </div>
-
-      <!-- Big play/pause overlay -->
-      <div class="play-overlay" id="playOverlay">
-        <div class="play-ring" id="playRing">⏸</div>
-      </div>
-
-      <!-- Subtitle -->
-      <div class="subtitle-bar" id="subtitleBar" style="opacity:0">
-        <div class="subtitle-text" id="subtitleText"></div>
-      </div>
-
-      <!-- Right Panel -->
-      <div class="right-panel" id="rightPanel">
-        <div class="rp-tabs">
-          <div class="rp-tab active" onclick="switchTab(this, 'history')" id="tabHistory">播放记录</div>
-          <div class="rp-tab" onclick="switchTab(this, 'subs')" id="tabSubs">字幕</div>
-          <div class="rp-tab" onclick="switchTab(this, 'info')" id="tabInfo">信息</div>
-        </div>
-        <div class="rp-body" id="rpBody">
-
-          <!-- Play History -->
-          <div id="panelHistory">
-            <div style="font-size:11px; color:var(--t-3); margin-bottom: 10px; padding: 0 2px;">最近观看</div>
-            <div id="historyList">
-              <!-- History items rendered dynamically -->
-            </div>
-            <div style="font-size:10px; color:var(--t-3); text-align:center; margin-top:16px; cursor:pointer; opacity:0.6; transition:opacity var(--dur-fast);" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'" onclick="toast('🗑 播放记录已清空')">清除所有记录</div>
-          </div>
-
-          <!-- Subtitles (hidden) -->
-          <div id="panelSubs" style="display:none">
-            <div style="font-size:11px; color:var(--t-3); margin-bottom: 10px; padding: 0 2px;">选择字幕轨道</div>
-            <div class="sub-item active" onclick="selectSub(this, '简体中文')">
-              <span class="sub-check">✓</span> 简体中文
-            </div>
-            <div class="sub-item" onclick="selectSub(this, '英文')">
-              <span class="sub-check">✓</span> English
-            </div>
-            <div class="sub-item" onclick="selectSub(this, '关闭')">
-              <span class="sub-check">✓</span> 关闭字幕
-            </div>
-          </div>
-
-          <!-- Info (hidden) -->
-          <div id="panelInfo" style="display:none">
-            <div class="side-info-title" id="infoTitle">暂无视频信息</div>
-            <div class="side-info-list" id="infoTable"></div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- Speed popup -->
-      <div class="speed-popup" id="speedPopup">
-        <div class="speed-opt" onclick="setSpeed(0.5)">0.5×</div>
-        <div class="speed-opt" onclick="setSpeed(0.75)">0.75×</div>
-        <div class="speed-opt active" onclick="setSpeed(1.0)" id="speed1x">1×</div>
-        <div class="speed-opt" onclick="setSpeed(1.25)">1.25×</div>
-        <div class="speed-opt" onclick="setSpeed(1.5)">1.5×</div>
-        <div class="speed-opt" onclick="setSpeed(2.0)">2×</div>
-      </div>
-
     </div>
 
-    <!-- Controls Overlay -->
-    <div class="controls-overlay" id="controlsOverlay">
-
-      <!-- Seekbar -->
-      <div class="progress-row">
-        <span class="time-badge" id="currentTime">0:00 / 0:00</span>
-        <span class="mse-badge" id="mseBadge">MSE</span>
-        <div class="seekbar" id="seekbar" onmousemove="seekHover(event)">
-          <div class="seekbar-buf" id="seekBuf"></div>
-          <div class="seekbar-fill" id="seekFill">
-            <div class="seekbar-thumb"></div>
-          </div>
-          <!-- Hover preview -->
-          <div class="seek-line" id="seekLine"></div>
-          <div class="seek-preview" id="seekPreview">0:00</div>
-          <!-- A-B Loop markers (rendered dynamically) -->
-          <div class="ab-range-fill" id="abRangeFill" style="display:none;"></div>
-          <div class="ab-marker" id="abMarkerA" style="display:none;" data-label="A"></div>
-          <div class="ab-marker" id="abMarkerB" style="display:none;" data-label="B"></div>
-        </div>
+    <!-- ══ SIDEBAR ══ -->
+    <div class="sidebar">
+      <div class="sb-search">
+        <span class="sb-search-icon">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="6.5" cy="6.5" r="4.5" />
+            <path d="m10 10 3 3" />
+          </svg>
+        </span>
+        <input type="text" placeholder="搜索视频…" id="searchInput">
+        <button class="sb-fav-filter" id="favFilterBtn" title="仅看收藏" onclick="toggleFavFilter()">☆</button>
       </div>
 
-      <!-- Button Row -->
-      <div class="ctrl-row">
-        <!-- Left -->
-        <button class="cv-btn active" title="随机" onclick="toggleCtrl(this, '随机播放')">
+      <div class="sb-section">
+        <div class="sb-label">媒体库</div>
+        <div class="nav-item active" onclick="setNav(this)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
+            <rect x="2" y="3" width="20" height="14" rx="2" />
+            <path d="m8 21 4-4 4 4M12 17v4" />
           </svg>
-        </button>
-        <button class="cv-btn" title="上一个" onclick="prevVideo()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/>
+          全部视频
+        </div>
+        <div class="nav-item" onclick="setNav(this)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <polygon points="10 8 16 12 10 16 10 8" />
           </svg>
-        </button>
-        <button class="cv-btn" title="快退 10s" onclick="skip(-10)">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12.066 11.2a1 1 0 0 0 0 1.6l5.334 4A1 1 0 0 0 19 16V8a1 1 0 0 0-1.6-.8l-5.334 4z"/>
-            <path d="M4.066 11.2a1 1 0 0 0 0 1.6l5.334 4A1 1 0 0 0 11 16V8a1 1 0 0 0-1.6-.8l-5.334 4z"/>
+          最近播放
+        </div>
+        <div class="nav-item" onclick="setNav(this)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
           </svg>
-        </button>
+          收藏
+        </div>
+      </div>
 
-        <button class="cv-btn play" id="playBtn" onclick="togglePlay()">
-          <svg id="playIco" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M8 5v14l11-7z"/>
-          </svg>
-        </button>
+      <div class="sb-divider"></div>
+      <div class="sb-queue-header">
+        <div class="sb-label">队列</div>
+        <div class="sb-queue-actions">
+          <button class="sb-action-btn" title="清空队列" onclick="clearPlaylist()">清空</button>
+          <button class="sb-add-btn" title="添加视频" onclick="openAddVideoModal()">+</button>
+        </div>
+      </div>
+      <div class="video-list" id="videoList">
+        <!-- Video cards will be dynamically rendered -->
+      </div>
+    </div>
 
-        <button class="cv-btn" title="快进 10s" onclick="skip(10)">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M11.934 11.2a1 1 0 0 1 0 1.6l-5.334 4A1 1 0 0 1 5 16V8a1 1 0 0 1 1.6-.8l5.334 4z"/>
-            <path d="M19.934 11.2a1 1 0 0 1 0 1.6l-5.334 4A1 1 0 0 1 13 16V8a1 1 0 0 1 1.6-.8l5.334 4z"/>
-          </svg>
-        </button>
-        <button class="cv-btn" title="下一个" onclick="nextVideo()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
-          </svg>
-        </button>
+    <!-- ══ STAGE ══ -->
+    <div class="stage" id="stage" oncontextmenu="showCtx(event)">
 
-        <div class="ctrl-spacer"></div>
+      <!-- Video Frame -->
+      <div class="video-frame" id="videoFrame">
 
-        <!-- Right -->
-        <span class="sleep-timer-badge" id="sleepTimerBadge" style="display:none;" onclick="cancelSleepTimer()" title="点击取消定时">⏱ --:--</span>
-        <div class="vol-group">
-          <button class="cv-btn" onclick="toggleMute()" id="muteBtn" title="静音">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-              <path id="volWave" d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/>
+        <!-- Scene — contains <video> and empty state -->
+        <div class="scene" id="scene">
+          <!-- Real video element -->
+          <video id="video" preload="metadata" playsinline></video>
+
+          <!-- Film grain overlay -->
+          <div class="film-grain" id="filmGrain"></div>
+
+          <!-- Empty state (shown when no video loaded) -->
+          <div class="empty-state" id="emptyState">
+            <div class="empty-state-card">
+              <div class="empty-state-icon">
+                <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                  <path d="M12 3v12" />
+                  <path d="m7 10 5 5 5-5" />
+                  <path d="M5 19h14" />
+                </svg>
+              </div>
+              <div class="empty-state-text">拖入视频即可播放</div>
+              <div class="empty-state-hint">MP4 / MKV / WebM / MOV</div>
+              <div class="empty-state-actions">
+                <button class="empty-primary" onclick="openAddVideoModal()">打开视频</button>
+                <button class="empty-secondary"
+                  onclick="IS_ELECTRON ? electronOpenFolderDialog() : openAddVideoModal()">打开文件夹</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Kbd hint -->
+        <div class="kbd-hint" id="kbdHint"></div>
+
+        <!-- Screenshot flash overlay -->
+        <div id="screenshotFlash" style="display:none;"></div>
+
+        <!-- Video Info Panel -->
+        <div class="video-info-panel" id="videoInfoPanel">
+          <div class="info-title" id="vinfoTitle">暂无视频信息</div>
+          <div id="vinfoBody"></div>
+        </div>
+
+        <!-- MKV loading overlay -->
+        <div class="mkv-loading" id="mkvLoading">
+          <div class="mkv-loading-spinner"></div>
+          <div class="mkv-loading-text" id="mkvLoadingText">正在解析 MKV 文件…</div>
+          <div class="mkv-loading-sub" id="mkvLoadingSub"></div>
+        </div>
+
+        <!-- Big play/pause overlay -->
+        <div class="play-overlay" id="playOverlay">
+          <div class="play-ring" id="playRing">⏸</div>
+        </div>
+
+        <!-- Subtitle -->
+        <div class="subtitle-bar" id="subtitleBar" style="opacity:0">
+          <div class="subtitle-text" id="subtitleText"></div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="right-panel" id="rightPanel">
+          <div class="rp-tabs">
+            <div class="rp-tab active" onclick="switchTab(this, 'history')" id="tabHistory">播放记录</div>
+            <div class="rp-tab" onclick="switchTab(this, 'subs')" id="tabSubs">字幕</div>
+            <div class="rp-tab" onclick="switchTab(this, 'info')" id="tabInfo">信息</div>
+          </div>
+          <div class="rp-body" id="rpBody">
+
+            <!-- Play History -->
+            <div id="panelHistory">
+              <div style="font-size:11px; color:var(--t-3); margin-bottom: 10px; padding: 0 2px;">最近观看</div>
+              <div id="historyList">
+                <!-- History items rendered dynamically -->
+              </div>
+              <div
+                style="font-size:10px; color:var(--t-3); text-align:center; margin-top:16px; cursor:pointer; opacity:0.6; transition:opacity var(--dur-fast);"
+                onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'"
+                onclick="toast('🗑 播放记录已清空')">清除所有记录</div>
+            </div>
+
+            <!-- Subtitles (hidden) -->
+            <div id="panelSubs" style="display:none">
+              <div style="font-size:11px; color:var(--t-3); margin-bottom: 10px; padding: 0 2px;">选择字幕轨道</div>
+              <div class="sub-item active" onclick="selectSub(this, '简体中文')">
+                <span class="sub-check">✓</span> 简体中文
+              </div>
+              <div class="sub-item" onclick="selectSub(this, '英文')">
+                <span class="sub-check">✓</span> English
+              </div>
+              <div class="sub-item" onclick="selectSub(this, '关闭')">
+                <span class="sub-check">✓</span> 关闭字幕
+              </div>
+            </div>
+
+            <!-- Info (hidden) -->
+            <div id="panelInfo" style="display:none">
+              <div class="side-info-title" id="infoTitle">暂无视频信息</div>
+              <div class="side-info-list" id="infoTable"></div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Speed popup -->
+        <div class="speed-popup" id="speedPopup">
+          <div class="speed-opt" onclick="setSpeed(0.5)">0.5×</div>
+          <div class="speed-opt" onclick="setSpeed(0.75)">0.75×</div>
+          <div class="speed-opt active" onclick="setSpeed(1.0)" id="speed1x">1×</div>
+          <div class="speed-opt" onclick="setSpeed(1.25)">1.25×</div>
+          <div class="speed-opt" onclick="setSpeed(1.5)">1.5×</div>
+          <div class="speed-opt" onclick="setSpeed(2.0)">2×</div>
+        </div>
+
+      </div>
+
+      <!-- Controls Overlay -->
+      <div class="controls-overlay" id="controlsOverlay">
+
+        <!-- Seekbar -->
+        <div class="progress-row">
+          <span class="time-badge" id="currentTime">0:00 / 0:00</span>
+          <span class="mse-badge" id="mseBadge">MSE</span>
+          <div class="seekbar" id="seekbar" onmousemove="seekHover(event)">
+            <div class="seekbar-buf" id="seekBuf"></div>
+            <div class="seekbar-fill" id="seekFill">
+              <div class="seekbar-thumb"></div>
+            </div>
+            <!-- Hover preview -->
+            <div class="seek-line" id="seekLine"></div>
+            <div class="seek-preview" id="seekPreview">0:00</div>
+            <!-- A-B Loop markers (rendered dynamically) -->
+            <div class="ab-range-fill" id="abRangeFill" style="display:none;"></div>
+            <div class="ab-marker" id="abMarkerA" style="display:none;" data-label="A"></div>
+            <div class="ab-marker" id="abMarkerB" style="display:none;" data-label="B"></div>
+          </div>
+        </div>
+
+        <!-- Button Row -->
+        <div class="ctrl-row">
+          <!-- Left -->
+          <button class="cv-btn active" title="随机" onclick="toggleCtrl(this, '随机播放')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
             </svg>
           </button>
-          <div class="vol-slider" id="volSlider">
-            <div class="vol-fill" id="volFill"></div>
+          <button class="cv-btn" title="上一个" onclick="prevVideo()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M6 6h2v12H6zm3.5 6 8.5 6V6z" />
+            </svg>
+          </button>
+          <button class="cv-btn" title="快退 10s" onclick="skip(-10)">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12.066 11.2a1 1 0 0 0 0 1.6l5.334 4A1 1 0 0 0 19 16V8a1 1 0 0 0-1.6-.8l-5.334 4z" />
+              <path d="M4.066 11.2a1 1 0 0 0 0 1.6l5.334 4A1 1 0 0 0 11 16V8a1 1 0 0 0-1.6-.8l-5.334 4z" />
+            </svg>
+          </button>
+
+          <button class="cv-btn play" id="playBtn" onclick="togglePlay()">
+            <svg id="playIco" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </button>
+
+          <button class="cv-btn" title="快进 10s" onclick="skip(10)">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11.934 11.2a1 1 0 0 1 0 1.6l-5.334 4A1 1 0 0 1 5 16V8a1 1 0 0 1 1.6-.8l5.334 4z" />
+              <path d="M19.934 11.2a1 1 0 0 1 0 1.6l-5.334 4A1 1 0 0 1 13 16V8a1 1 0 0 1 1.6-.8l5.334 4z" />
+            </svg>
+          </button>
+          <button class="cv-btn" title="下一个" onclick="nextVideo()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+            </svg>
+          </button>
+
+          <div class="ctrl-spacer"></div>
+
+          <!-- Right -->
+          <span class="sleep-timer-badge" id="sleepTimerBadge" style="display:none;" onclick="cancelSleepTimer()"
+            title="点击取消定时">⏱ --:--</span>
+          <div class="vol-group">
+            <button class="cv-btn" onclick="toggleMute()" id="muteBtn" title="静音">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <path id="volWave" d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" />
+              </svg>
+            </button>
+            <div class="vol-slider" id="volSlider">
+              <div class="vol-fill" id="volFill"></div>
+            </div>
+          </div>
+
+          <button class="cv-btn" title="字幕" onclick="subToggle()" id="subBtn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+              <path d="M7 15h4M15 15h2M7 11h2M11 11h6" />
+            </svg>
+          </button>
+          <input type="file" id="subFileInput" accept=".srt,.vtt,.ass,.ssa" style="display:none"
+            onchange="handleSubFileSelect(this.files)">
+
+          <span class="speed-badge" id="speedBadge" onclick="toggleSpeedPop()" title="播放速度">1×</span>
+
+          <button class="cv-btn" id="favBtn2" title="收藏" onclick="toggleFav()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
+          </button>
+
+          <button class="cv-btn" title="画中画 (L)" onclick="togglePiP()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="2" y="3" width="20" height="15" rx="2" />
+              <rect x="13" y="9" width="8" height="7" rx="1" fill="currentColor" opacity=".4" stroke="none" />
+            </svg>
+          </button>
+
+          <button class="cv-btn" title="全屏" onclick="toggleFull()">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9">
+              <path d="M1 6V1h5M10 1h5v5M15 10v5h-5M6 15H1v-5" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Drop Zone Overlay -->
+  <div class="drop-zone-overlay" id="dropZoneOverlay">
+    <div class="drop-zone-inner">
+      <div class="drop-zone-icon">📥</div>
+      <div class="drop-zone-text">拖放视频文件到此处</div>
+      <div class="drop-zone-hint">支持 MP4、WebM 格式</div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toastEl"></div>
+
+  <!-- Add Video Modal -->
+  <div class="add-video-overlay" id="addVideoOverlay" onclick="if(event.target===this)closeAddVideoModal()">
+    <div class="add-video-modal">
+      <div class="avm-header">
+        <h3>添加视频</h3>
+        <button class="settings-close" onclick="closeAddVideoModal()">✕</button>
+      </div>
+      <div class="avm-tabs">
+        <div class="avm-tab active" onclick="switchAddTab(this, 'url')" id="addTabUrl">网络地址</div>
+        <div class="avm-tab" onclick="switchAddTab(this, 'file')" id="addTabFile">本地文件</div>
+      </div>
+      <div class="avm-body">
+        <!-- URL tab -->
+        <div id="addPanelUrl">
+          <div class="avm-input-group">
+            <label>视频地址</label>
+            <input type="text" class="avm-input" id="addUrlInput" placeholder="输入 HTTP/HTTPS 地址…">
+          </div>
+          <div class="avm-input-group">
+            <label>视频标题（可选）</label>
+            <input type="text" class="avm-input" id="addTitleInput" placeholder="为视频命名…">
+          </div>
+          <div class="avm-actions">
+            <button class="avm-btn avm-btn-cancel" onclick="closeAddVideoModal()">取消</button>
+            <button class="avm-btn avm-btn-primary" onclick="addNetworkVideo()">播放</button>
           </div>
         </div>
-
-        <button class="cv-btn" title="字幕" onclick="subToggle()" id="subBtn">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <rect x="2" y="4" width="20" height="16" rx="2"/>
-            <path d="M7 15h4M15 15h2M7 11h2M11 11h6"/>
-          </svg>
-        </button>
-        <input type="file" id="subFileInput" accept=".srt,.vtt,.ass,.ssa" style="display:none" onchange="handleSubFileSelect(this.files)">
-
-        <span class="speed-badge" id="speedBadge" onclick="toggleSpeedPop()" title="播放速度">1×</span>
-
-        <button class="cv-btn" id="favBtn2" title="收藏" onclick="toggleFav()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-          </svg>
-        </button>
-
-        <button class="cv-btn" title="画中画 (L)" onclick="togglePiP()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <rect x="2" y="3" width="20" height="15" rx="2"/>
-            <rect x="13" y="9" width="8" height="7" rx="1" fill="currentColor" opacity=".4" stroke="none"/>
-          </svg>
-        </button>
-
-        <button class="cv-btn" title="全屏" onclick="toggleFull()">
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9">
-            <path d="M1 6V1h5M10 1h5v5M15 10v5h-5M6 15H1v-5"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<!-- Drop Zone Overlay -->
-<div class="drop-zone-overlay" id="dropZoneOverlay">
-  <div class="drop-zone-inner">
-    <div class="drop-zone-icon">📥</div>
-    <div class="drop-zone-text">拖放视频文件到此处</div>
-    <div class="drop-zone-hint">支持 MP4、WebM 格式</div>
-  </div>
-</div>
-
-<!-- Toast -->
-<div class="toast" id="toastEl"></div>
-
-<!-- Add Video Modal -->
-<div class="add-video-overlay" id="addVideoOverlay" onclick="if(event.target===this)closeAddVideoModal()">
-  <div class="add-video-modal">
-    <div class="avm-header">
-      <h3>添加视频</h3>
-      <button class="settings-close" onclick="closeAddVideoModal()">✕</button>
-    </div>
-    <div class="avm-tabs">
-      <div class="avm-tab active" onclick="switchAddTab(this, 'url')" id="addTabUrl">网络地址</div>
-      <div class="avm-tab" onclick="switchAddTab(this, 'file')" id="addTabFile">本地文件</div>
-    </div>
-    <div class="avm-body">
-      <!-- URL tab -->
-      <div id="addPanelUrl">
-        <div class="avm-input-group">
-          <label>视频地址</label>
-          <input type="text" class="avm-input" id="addUrlInput" placeholder="输入 HTTP/HTTPS 地址…">
-        </div>
-        <div class="avm-input-group">
-          <label>视频标题（可选）</label>
-          <input type="text" class="avm-input" id="addTitleInput" placeholder="为视频命名…">
-        </div>
-        <div class="avm-actions">
-          <button class="avm-btn avm-btn-cancel" onclick="closeAddVideoModal()">取消</button>
-          <button class="avm-btn avm-btn-primary" onclick="addNetworkVideo()">播放</button>
-        </div>
-      </div>
-      <!-- File tab -->
-      <div id="addPanelFile" style="display:none">
-        <div class="avm-file-zone" onclick="document.getElementById('fileInput').click()">
-          <div class="avm-file-zone-icon">📂</div>
-          <div class="avm-file-zone-text">点击选择视频文件</div>
-          <div class="avm-file-zone-hint">或拖放文件到此处</div>
-        </div>
-        <input type="file" id="fileInput" accept="video/*" multiple style="display:none" onchange="handleFileSelect(this.files)">
-        <div style="margin-top:12px; font-size:11px; color:var(--t-3); opacity:0.7; line-height:1.5; padding:0 4px;">
-          💡 提示：通过 macOS Finder 挂载 SMB/NFS 卷后，可在本地文件中选择 NAS 上的视频
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Settings Modal -->
-<div class="settings-overlay" id="settingsOverlay" onclick="if(event.target===this)closeSettings()">
-  <div class="settings-modal">
-    <div class="settings-header">
-      <h3>⚙ 设置</h3>
-      <button class="settings-close" onclick="closeSettings()">✕</button>
-    </div>
-
-    <!-- Tabs -->
-    <div class="settings-tabs">
-      <div class="settings-tab active" onclick="switchSettingsTab(this, 'playback')">播放</div>
-      <div class="settings-tab" onclick="switchSettingsTab(this, 'display')">画面</div>
-      <div class="settings-tab" onclick="switchSettingsTab(this, 'about')">关于</div>
-    </div>
-
-    <!-- Tab 1: Playback -->
-    <div class="settings-tab-content active" id="settingsTabPlayback">
-      <div class="settings-section">
-        <div class="settings-section-title">音频</div>
-        <div class="settings-slider-row">
-          <label><span class="ico">🔊</span> 音量</label>
-          <input type="range" class="settings-range" min="0" max="100" value="80" id="volRange" oninput="setVolSlider(this.value)">
-          <span class="settings-range-val" id="volVal">80%</span>
-        </div>
-        <div class="settings-slider-row">
-          <label><span class="ico">⏩</span> 倍速</label>
-          <input type="range" class="settings-range" min="25" max="300" value="100" step="25" id="speedRange" oninput="setSpeedSlider(this.value)">
-          <span class="settings-range-val" id="speedVal">1.0x</span>
-        </div>
-        <div class="settings-row">
-          <span class="settings-label"><span class="ico">🔇</span> 静音</span>
-          <button class="settings-toggle" id="muteToggle" onclick="toggleMuteSetting()"></button>
-        </div>
-      </div>
-      <div class="settings-section">
-        <div class="settings-section-title">定时停止</div>
-        <div class="settings-row">
-          <span class="settings-label"><span class="ico">⏱</span> 睡眠定时器</span>
-          <select class="settings-select" id="sleepTimerSelect" onchange="setSleepTimer(this.value)" style="background:var(--bg-2); border:1px solid var(--border); color:var(--t-1); padding:5px 10px; border-radius:6px; font-size:12px; outline:none; cursor:pointer;">
-            <option value="0">关闭</option>
-            <option value="15">15 分钟</option>
-            <option value="30">30 分钟</option>
-            <option value="45">45 分钟</option>
-            <option value="60">60 分钟</option>
-            <option value="current">当前视频结束后</option>
-          </select>
-        </div>
-      </div>
-      <div class="settings-section">
-        <div class="settings-section-title">字幕</div>
-        <div class="settings-row">
-          <span class="settings-label"><span class="ico">💬</span> 字幕开关</span>
-          <button class="settings-toggle" id="subToggle" onclick="subToggle()"></button>
-        </div>
-        <div class="settings-slider-row">
-          <label><span class="ico">⏱</span> 字幕延迟</label>
-          <input type="range" class="settings-range" min="-500" max="500" value="0" step="50" id="subDelayRange" oninput="setSubDelay(this.value)">
-          <span class="settings-range-val" id="subDelayVal">0ms</span>
-        </div>
-        <div class="settings-row">
-          <span class="settings-label"><span class="ico">🔤</span> 字幕字号</span>
-          <div class="rotate-btns">
-            <button class="rotate-btn sub-size-btn" onclick="setSubSize('small')" id="subSizeSmall" title="小">S</button>
-            <button class="rotate-btn sub-size-btn active" onclick="setSubSize('medium')" id="subSizeMedium" title="中">M</button>
-            <button class="rotate-btn sub-size-btn" onclick="setSubSize('large')" id="subSizeLarge" title="大">L</button>
+        <!-- File tab -->
+        <div id="addPanelFile" style="display:none">
+          <div class="avm-file-zone" onclick="document.getElementById('fileInput').click()">
+            <div class="avm-file-zone-icon">📂</div>
+            <div class="avm-file-zone-text">点击选择视频文件</div>
+            <div class="avm-file-zone-hint">或拖放文件到此处</div>
+          </div>
+          <input type="file" id="fileInput" accept="video/*" multiple style="display:none"
+            onchange="handleFileSelect(this.files)">
+          <div style="margin-top:12px; font-size:11px; color:var(--t-3); opacity:0.7; line-height:1.5; padding:0 4px;">
+            💡 提示：通过 macOS Finder 挂载 SMB/NFS 卷后，可在本地文件中选择 NAS 上的视频
           </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Tab 2: Display -->
-    <div class="settings-tab-content" id="settingsTabDisplay">
-      <div class="settings-section">
-        <div class="settings-section-title">画面调节</div>
-        <div class="settings-slider-row">
-          <label><span class="ico">☀️</span> 亮度</label>
-          <input type="range" class="settings-range" min="50" max="150" value="100" id="brightnessRange" oninput="setFilter()">
-          <span class="settings-range-val" id="brightnessVal">100%</span>
-        </div>
-        <div class="settings-slider-row">
-          <label><span class="ico">🎨</span> 对比度</label>
-          <input type="range" class="settings-range" min="50" max="200" value="100" id="contrastRange" oninput="setFilter()">
-          <span class="settings-range-val" id="contrastVal">100%</span>
-        </div>
-        <div class="settings-slider-row">
-          <label><span class="ico">💧</span> 饱和度</label>
-          <input type="range" class="settings-range" min="0" max="200" value="100" id="saturateRange" oninput="setFilter()">
-          <span class="settings-range-val" id="saturateVal">100%</span>
-        </div>
-        <div class="settings-slider-row">
-          <label><span class="ico">🌈</span> 色相</label>
-          <input type="range" class="settings-range" min="0" max="360" value="0" id="hueRotateRange" oninput="setFilter()">
-          <span class="settings-range-val" id="hueRotateVal">0°</span>
-        </div>
-        <div class="settings-slider-row">
-          <label><span class="ico">🌫</span> 模糊</label>
-          <input type="range" class="settings-range" min="0" max="50" value="0" id="blurRange" oninput="setFilter()">
-          <span class="settings-range-val" id="blurVal">0px</span>
-        </div>
-        <button class="filter-reset-btn" onclick="resetVideoFilters()">↺ 重置画面调节</button>
+  <!-- Settings Modal -->
+  <div class="settings-overlay" id="settingsOverlay" onclick="if(event.target===this)closeSettings()">
+    <div class="settings-modal">
+      <div class="settings-header">
+        <h3>⚙ 设置</h3>
+        <button class="settings-close" onclick="closeSettings()">✕</button>
       </div>
-      <div class="settings-section">
-        <div class="settings-section-title">旋转 / 翻转 / 缩放</div>
-        <div class="settings-row">
-          <span class="settings-label"><span class="ico">🔄</span> 旋转</span>
-          <div class="rotate-btns">
-            <button class="rotate-btn" onclick="setRotate(-90)" title="逆时针 90°">↺</button>
-            <button class="rotate-btn active" onclick="setRotate(0)" title="重置" id="rotate0">0°</button>
-            <button class="rotate-btn" onclick="setRotate(90)" title="顺时针 90°">↻</button>
-            <button class="rotate-btn" onclick="setRotate(180)" title="180°">↩</button>
+
+      <!-- Tabs -->
+      <div class="settings-tabs">
+        <div class="settings-tab active" onclick="switchSettingsTab(this, 'playback')">播放</div>
+        <div class="settings-tab" onclick="switchSettingsTab(this, 'display')">画面</div>
+        <div class="settings-tab" onclick="switchSettingsTab(this, 'about')">关于</div>
+      </div>
+
+      <!-- Tab 1: Playback -->
+      <div class="settings-tab-content active" id="settingsTabPlayback">
+        <div class="settings-section">
+          <div class="settings-section-title">音频</div>
+          <div class="settings-slider-row">
+            <label><span class="ico">🔊</span> 音量</label>
+            <input type="range" class="settings-range" min="0" max="100" value="80" id="volRange"
+              oninput="setVolSlider(this.value)">
+            <span class="settings-range-val" id="volVal">80%</span>
+          </div>
+          <div class="settings-slider-row">
+            <label><span class="ico">⏩</span> 倍速</label>
+            <input type="range" class="settings-range" min="25" max="300" value="100" step="25" id="speedRange"
+              oninput="setSpeedSlider(this.value)">
+            <span class="settings-range-val" id="speedVal">1.0x</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label"><span class="ico">🔇</span> 静音</span>
+            <button class="settings-toggle" id="muteToggle" onclick="toggleMuteSetting()"></button>
           </div>
         </div>
-        <div class="settings-slider-row">
-          <label><span class="ico">🔀</span> 翻转</label>
-          <button class="rotate-reset" id="flipHBtn" onclick="toggleFlip('h')">水平翻转</button>
-          <button class="rotate-reset" id="flipVBtn" onclick="toggleFlip('v')">垂直翻转</button>
+        <div class="settings-section">
+          <div class="settings-section-title">定时停止</div>
+          <div class="settings-row">
+            <span class="settings-label"><span class="ico">⏱</span> 睡眠定时器</span>
+            <select class="settings-select" id="sleepTimerSelect" onchange="setSleepTimer(this.value)"
+              style="background:var(--bg-2); border:1px solid var(--border); color:var(--t-1); padding:5px 10px; border-radius:6px; font-size:12px; outline:none; cursor:pointer;">
+              <option value="0">关闭</option>
+              <option value="15">15 分钟</option>
+              <option value="30">30 分钟</option>
+              <option value="45">45 分钟</option>
+              <option value="60">60 分钟</option>
+              <option value="current">当前视频结束后</option>
+            </select>
+          </div>
         </div>
-        <div class="settings-slider-row">
-          <label><span class="ico">🔲</span> 缩放</label>
-          <input type="range" class="settings-range" min="50" max="200" value="100" id="scaleRange" oninput="setScale(this.value)">
-          <span class="settings-range-val" id="scaleVal">100%</span>
+        <div class="settings-section">
+          <div class="settings-section-title">字幕</div>
+          <div class="settings-row">
+            <span class="settings-label"><span class="ico">💬</span> 字幕开关</span>
+            <button class="settings-toggle" id="subToggle" onclick="subToggle()"></button>
+          </div>
+          <div class="settings-slider-row">
+            <label><span class="ico">⏱</span> 字幕延迟</label>
+            <input type="range" class="settings-range" min="-500" max="500" value="0" step="50" id="subDelayRange"
+              oninput="setSubDelay(this.value)">
+            <span class="settings-range-val" id="subDelayVal">0ms</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label"><span class="ico">🔤</span> 字幕字号</span>
+            <div class="rotate-btns">
+              <button class="rotate-btn sub-size-btn" onclick="setSubSize('small')" id="subSizeSmall"
+                title="小">S</button>
+              <button class="rotate-btn sub-size-btn active" onclick="setSubSize('medium')" id="subSizeMedium"
+                title="中">M</button>
+              <button class="rotate-btn sub-size-btn" onclick="setSubSize('large')" id="subSizeLarge"
+                title="大">L</button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Tab 3: About -->
-    <div class="settings-tab-content" id="settingsTabAbout">
-      <div class="settings-section">
-        <div class="settings-section-title">Prism Player</div>
-        <div class="settings-row">
-          <span class="settings-label">版本</span><span class="settings-value">0.9.0</span>
+      <!-- Tab 2: Display -->
+      <div class="settings-tab-content" id="settingsTabDisplay">
+        <div class="settings-section">
+          <div class="settings-section-title">画面调节</div>
+          <div class="settings-slider-row">
+            <label><span class="ico">☀️</span> 亮度</label>
+            <input type="range" class="settings-range" min="50" max="150" value="100" id="brightnessRange"
+              oninput="setFilter()">
+            <span class="settings-range-val" id="brightnessVal">100%</span>
+          </div>
+          <div class="settings-slider-row">
+            <label><span class="ico">🎨</span> 对比度</label>
+            <input type="range" class="settings-range" min="50" max="200" value="100" id="contrastRange"
+              oninput="setFilter()">
+            <span class="settings-range-val" id="contrastVal">100%</span>
+          </div>
+          <div class="settings-slider-row">
+            <label><span class="ico">💧</span> 饱和度</label>
+            <input type="range" class="settings-range" min="0" max="200" value="100" id="saturateRange"
+              oninput="setFilter()">
+            <span class="settings-range-val" id="saturateVal">100%</span>
+          </div>
+          <div class="settings-slider-row">
+            <label><span class="ico">🌈</span> 色相</label>
+            <input type="range" class="settings-range" min="0" max="360" value="0" id="hueRotateRange"
+              oninput="setFilter()">
+            <span class="settings-range-val" id="hueRotateVal">0°</span>
+          </div>
+          <div class="settings-slider-row">
+            <label><span class="ico">🌫</span> 模糊</label>
+            <input type="range" class="settings-range" min="0" max="50" value="0" id="blurRange" oninput="setFilter()">
+            <span class="settings-range-val" id="blurVal">0px</span>
+          </div>
+          <button class="filter-reset-btn" onclick="resetVideoFilters()">↺ 重置画面调节</button>
         </div>
-        <div class="settings-row">
-          <span class="settings-label">引擎</span><span class="settings-value">HTML5 Video + MSE</span>
-        </div>
-        <div class="settings-row">
-          <span class="settings-label">MKV 支持</span><span class="settings-value">通过 MKV 解封装 + MSE 播放</span>
+        <div class="settings-section">
+          <div class="settings-section-title">旋转 / 翻转 / 缩放</div>
+          <div class="settings-row">
+            <span class="settings-label"><span class="ico">🔄</span> 旋转</span>
+            <div class="rotate-btns">
+              <button class="rotate-btn" onclick="setRotate(-90)" title="逆时针 90°">↺</button>
+              <button class="rotate-btn active" onclick="setRotate(0)" title="重置" id="rotate0">0°</button>
+              <button class="rotate-btn" onclick="setRotate(90)" title="顺时针 90°">↻</button>
+              <button class="rotate-btn" onclick="setRotate(180)" title="180°">↩</button>
+            </div>
+          </div>
+          <div class="settings-slider-row">
+            <label><span class="ico">🔀</span> 翻转</label>
+            <button class="rotate-reset" id="flipHBtn" onclick="toggleFlip('h')">水平翻转</button>
+            <button class="rotate-reset" id="flipVBtn" onclick="toggleFlip('v')">垂直翻转</button>
+          </div>
+          <div class="settings-slider-row">
+            <label><span class="ico">🔲</span> 缩放</label>
+            <input type="range" class="settings-range" min="50" max="200" value="100" id="scaleRange"
+              oninput="setScale(this.value)">
+            <span class="settings-range-val" id="scaleVal">100%</span>
+          </div>
         </div>
       </div>
-      <div class="settings-section">
-        <div class="settings-section-title">快捷键</div>
-        <div class="settings-row">
-          <span class="settings-label">空格</span><span class="settings-value">播放 / 暂停</span>
+
+      <!-- Tab 3: About -->
+      <div class="settings-tab-content" id="settingsTabAbout">
+        <div class="settings-section">
+          <div class="settings-section-title">Prism Player</div>
+          <div class="settings-row">
+            <span class="settings-label">版本</span><span class="settings-value">1.0.0</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">引擎</span><span class="settings-value">HTML5 Video + MSE</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">MKV 支持</span><span class="settings-value">通过 MKV 解封装 + MSE 播放</span>
+          </div>
         </div>
-        <div class="settings-row">
-          <span class="settings-label">← →</span><span class="settings-value">快退 / 快进 10s</span>
-        </div>
-        <div class="settings-row">
-          <span class="settings-label">↑ ↓</span><span class="settings-value">音量 +/-</span>
-        </div>
-        <div class="settings-row">
-          <span class="settings-label">Shift ↑ ↓</span><span class="settings-value">亮度 +/-</span>
-        </div>
-        <div class="settings-row">
-          <span class="settings-label">F</span><span class="settings-value">全屏</span>
-        </div>
-        <div class="settings-row">
-          <span class="settings-label">M</span><span class="settings-value">静音</span>
-        </div>
-        <div class="settings-row">
-          <span class="settings-label">C</span><span class="settings-value">字幕</span>
-        </div>
-        <div class="settings-row">
-          <span class="settings-label">B</span><span class="settings-value">收藏 / 取消收藏</span>
-        </div>
-        <div class="settings-row">
-          <span class="settings-label">N / P</span><span class="settings-value">下一个 / 上一个视频</span>
-        </div>
-        <div class="settings-row">
-          <span class="settings-label">L</span><span class="settings-value">画中画</span>
-        </div>
-        <div class="settings-row">
-          <span class="settings-label">[ / ]</span><span class="settings-value">A-B 循环 设点 / 清除</span>
-        </div>
-        <div class="settings-row">
-          <span class="settings-label">S</span><span class="settings-value">截图当前帧</span>
-        </div>
-        <div class="settings-row">
-          <span class="settings-label">D / Shift+D</span><span class="settings-value">减速 / 加速 0.1×</span>
-        </div>
-        <div class="settings-row">
-          <span class="settings-label">1</span><span class="settings-value">重置 1× 速度</span>
-        </div>
-        <div class="settings-row">
-          <span class="settings-label">I</span><span class="settings-value">视频信息面板</span>
-        </div>
-        <div class="settings-row">
-          <span class="settings-label">Shift+M</span><span class="settings-value">迷你模式</span>
+        <div class="settings-section">
+          <div class="settings-section-title">快捷键</div>
+          <div class="settings-row">
+            <span class="settings-label">空格</span><span class="settings-value">播放 / 暂停</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">← →</span><span class="settings-value">快退 / 快进 10s</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">↑ ↓</span><span class="settings-value">音量 +/-</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">Shift ↑ ↓</span><span class="settings-value">亮度 +/-</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">F</span><span class="settings-value">全屏</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">M</span><span class="settings-value">静音</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">C</span><span class="settings-value">字幕</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">B</span><span class="settings-value">收藏 / 取消收藏</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">N / P</span><span class="settings-value">下一个 / 上一个视频</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">L</span><span class="settings-value">画中画</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">[ / ]</span><span class="settings-value">A-B 循环 设点 / 清除</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">S</span><span class="settings-value">截图当前帧</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">D / Shift+D</span><span class="settings-value">减速 / 加速 0.1×</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">1</span><span class="settings-value">重置 1× 速度</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">I</span><span class="settings-value">视频信息面板</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">Shift+M</span><span class="settings-value">迷你模式</span>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Context Menu -->
-<div class="ctx" id="ctxMenu">
-  <div class="ctx-row" onclick="closeCtx(); takeScreenshot()">📸 截图</div>
-  <div class="ctx-row" onclick="closeCtx(); toggleFav()" id="ctxFav">⭐ 收藏 / 取消收藏</div>
-  <div class="ctx-sep"></div>
-  <div class="ctx-row" onclick="closeCtx(); togglePanel()">📜 播放记录与字幕</div>
-  <div class="ctx-row" onclick="closeCtx(); togglePiP()">⧉ 画中画</div>
-  <div class="ctx-sep"></div>
-  <div class="ctx-row" onclick="closeCtx(); openSettings()">🎚 音频 / 视频设置</div>
-</div>
+  <!-- Context Menu -->
+  <div class="ctx" id="ctxMenu">
+    <div class="ctx-row" onclick="closeCtx(); takeScreenshot()">📸 截图</div>
+    <div class="ctx-row" onclick="closeCtx(); toggleFav()" id="ctxFav">⭐ 收藏 / 取消收藏</div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-row" onclick="closeCtx(); togglePanel()">📜 播放记录与字幕</div>
+    <div class="ctx-row" onclick="closeCtx(); togglePiP()">⧉ 画中画</div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-row" onclick="closeCtx(); openSettings()">🎚 音频 / 视频设置</div>
+  </div>
 
-<!-- Card Context Menu (right-click on sidebar video card) -->
-<div class="card-ctx" id="cardCtxMenu">
-  <div class="card-ctx-row" onclick="cardCtxPlay()">▶ 播放</div>
-  <div class="card-ctx-row" onclick="cardCtxFav()">⭐ 收藏 / 取消收藏</div>
-  <div class="card-ctx-sep"></div>
-  <div class="card-ctx-row" onclick="cardCtxReveal()">📂 显示文件位置</div>
-  <div class="card-ctx-sep"></div>
-  <div class="card-ctx-row danger" onclick="cardCtxRemove()">🗑 从列表移除</div>
-</div>
+  <!-- Card Context Menu (right-click on sidebar video card) -->
+  <div class="card-ctx" id="cardCtxMenu">
+    <div class="card-ctx-row" onclick="cardCtxPlay()">▶ 播放</div>
+    <div class="card-ctx-row" onclick="cardCtxFav()">⭐ 收藏 / 取消收藏</div>
+    <div class="card-ctx-sep"></div>
+    <div class="card-ctx-row" onclick="cardCtxReveal()">📂 显示文件位置</div>
+    <div class="card-ctx-sep"></div>
+    <div class="card-ctx-row danger" onclick="cardCtxRemove()">🗑 从列表移除</div>
+  </div>
 
 
   <!-- JS Modules (loaded in dependency order) -->
@@ -650,4 +646,5 @@
   <script src="mini.js"></script>
   <script src="electron.js"></script>
 </body>
+
 </html>

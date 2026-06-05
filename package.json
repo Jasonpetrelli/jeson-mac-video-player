@@ -1,6 +1,6 @@
 {
   "name": "prism-player",
-  "version": "0.9.1",
+  "version": "1.0.0",
   "description": "Prism — macOS Video Player",
   "main": "main.js",
   "scripts": {

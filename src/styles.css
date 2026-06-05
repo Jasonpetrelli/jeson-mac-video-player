@@ -477,43 +477,74 @@
       justify-content: center;
       z-index: 1;
       transition: opacity var(--dur-normal);
+      padding: 28px;
     }
     .empty-state.hidden {
       opacity: 0;
       pointer-events: none;
     }
+    .empty-state-card {
+      width: min(360px, 90%);
+      min-height: 220px;
+      border: 1.5px dashed oklch(70% 0.14 285 / 0.55);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: oklch(12% 0.014 245 / 0.72);
+      box-shadow: 0 18px 50px oklch(0% 0 0 / 0.35);
+    }
     .empty-state-icon {
-      font-size: 56px;
-      margin-bottom: 16px;
-      opacity: 0.3;
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      background: var(--accent-subtle);
+      margin-bottom: 18px;
     }
     .empty-state-text {
-      font-size: 15px;
-      font-weight: 500;
-      color: var(--t-3);
+      font-size: 18px;
+      font-weight: 650;
+      color: var(--t-1);
       margin-bottom: 6px;
     }
     .empty-state-hint {
       font-size: 12px;
-      color: var(--t-3);
-      opacity: 0.6;
+      color: var(--t-2);
     }
-    .empty-state-kbd {
-      margin-top: 20px;
+    .empty-state-actions {
+      margin-top: 22px;
       display: flex;
-      gap: 6px;
-      align-items: center;
-      font-size: 11px;
-      color: var(--t-3);
-      opacity: 0.5;
+      gap: 10px;
     }
-    .empty-state-kbd kbd {
-      background: var(--bg-2);
-      border: 1px solid var(--border-s);
-      border-radius: 4px;
-      padding: 2px 6px;
-      font-family: inherit;
-      font-size: 10px;
+    .empty-primary,
+    .empty-secondary {
+      height: 32px;
+      padding: 0 14px;
+      border-radius: 7px;
+      border: 1px solid transparent;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast);
+    }
+    .empty-primary {
+      color: oklch(98% 0.006 250);
+      background: var(--accent);
+    }
+    .empty-primary:hover { background: oklch(75% 0.18 300); }
+    .empty-secondary {
+      color: var(--t-2);
+      background: oklch(100% 0 0 / 0.06);
+      border-color: var(--border-s);
+    }
+    .empty-secondary:hover {
+      color: var(--t-1);
+      background: oklch(100% 0 0 / 0.1);
     }
 
     /* Subtitle */
