@@ -109,6 +109,7 @@ function onLoadedMetadata() {
 
   // Update titlebar
   updateTitlebar();
+  updateRightPanelInfo();
 
   // Start thumbnail generation (only if NOT about to auto-play,
   // otherwise thumbnail seeking conflicts with playback start)

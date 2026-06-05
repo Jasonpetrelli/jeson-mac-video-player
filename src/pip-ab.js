@@ -218,20 +218,12 @@ function resetSpeed() {
 
 let videoInfoTimer = null;
 
-/** Show video info panel for 3 seconds */
-function showVideoInfoPanel() {
-  var panel = DOM.videoInfoPanel;
+function getVideoInfoData() {
   var video = DOM.video;
-  var titleEl = document.getElementById('vinfoTitle');
-  var bodyEl = document.getElementById('vinfoBody');
-
-  // Get current video item
-  var item = playlist.find(function(v) { return v.id === currentVideoId; });
+  var item = playlist.find(function(v) { return v.id === currentVideoId; }) ||
+    favorites.find(function(v) { return v.id === currentVideoId; });
   var title = item ? item.title : (video.src || video.currentSrc || '未知');
 
-  titleEl.textContent = truncateMiddle(title, 40);
-
-  // Build info rows
   var rows = [];
   rows.push(['分辨率', (video.videoWidth || '?') + ' × ' + (video.videoHeight || '?')]);
   rows.push(['时长', formatTime(playback.duration)]);
@@ -239,22 +231,61 @@ function showVideoInfoPanel() {
   rows.push(['播放速度', playback.playbackRate.toFixed(1).replace(/\.0$/, '') + '×']);
   rows.push(['音量', Math.round(playback.volume * 100) + '%' + (playback.muted ? ' (静音)' : '')]);
 
-  // MSE mode indicator
   if (playback.isMSEMode) {
     rows.push(['模式', '<span class="info-mse">MSE</span>']);
+  } else if (item && item._transcodedPath) {
+    rows.push(['模式', 'AAC 兼容缓存']);
   }
 
-  // File size (if available from video item)
-  if (item && item.fileSize) {
-    var sizeMB = (item.fileSize / (1024 * 1024)).toFixed(1);
+  if (item && item._filePath) {
+    rows.push(['文件名', item._fileName || item._filePath.split('/').pop()]);
+  }
+  if (item && item._fileSize) {
+    var sizeMB = (item._fileSize / (1024 * 1024)).toFixed(1);
     rows.push(['文件大小', sizeMB + ' MB']);
   }
 
+  return { title: title, rows: rows };
+}
+
+function buildVideoInfoRowsHTML(rows, mode) {
   var html = '';
   rows.forEach(function(row) {
-    html += '<div class="info-row"><span class="info-key">' + row[0] + '</span><span class="info-val">' + row[1] + '</span></div>';
+    if (mode === 'side') {
+      html += '<div class="side-info-row"><span class="side-info-key">' + row[0] + '</span><span class="side-info-val" title="' + String(row[1]).replace(/<[^>]+>/g, '') + '">' + row[1] + '</span></div>';
+    } else {
+      html += '<div class="info-row"><span class="info-key">' + row[0] + '</span><span class="info-val">' + row[1] + '</span></div>';
+    }
   });
-  bodyEl.innerHTML = html;
+  return html;
+}
+
+function updateRightPanelInfo() {
+  var titleEl = document.getElementById('infoTitle');
+  var tableEl = document.getElementById('infoTable');
+  if (!titleEl || !tableEl) return;
+
+  if (!currentVideoId) {
+    titleEl.textContent = '暂无视频信息';
+    tableEl.innerHTML = '';
+    return;
+  }
+
+  var info = getVideoInfoData();
+  titleEl.textContent = truncateMiddle(info.title, 34);
+  titleEl.title = info.title;
+  tableEl.innerHTML = buildVideoInfoRowsHTML(info.rows, 'side');
+}
+
+/** Show video info panel for 3 seconds */
+function showVideoInfoPanel() {
+  var panel = DOM.videoInfoPanel;
+  var titleEl = document.getElementById('vinfoTitle');
+  var bodyEl = document.getElementById('vinfoBody');
+  var info = getVideoInfoData();
+
+  titleEl.textContent = truncateMiddle(info.title, 40);
+  bodyEl.innerHTML = buildVideoInfoRowsHTML(info.rows, 'div');
 
   panel.classList.add('show');
 

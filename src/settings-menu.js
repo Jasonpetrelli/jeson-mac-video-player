@@ -103,6 +103,7 @@ function switchTab(el, panel) {
   document.getElementById('panelSubs').style.display    = panel === 'subs'     ? '' : 'none';
   document.getElementById('panelInfo').style.display    = panel === 'info'    ? '' : 'none';
   ui.rightPanelTab = panel;
+  if (panel === 'info') updateRightPanelInfo();
 }
 
 /* ── Full screen ── */

@@ -304,6 +304,7 @@ function switchToVideo(id) {
 
   // Update UI
   updateTitlebar();
+  updateRightPanelInfo();
   renderSidebar();
   renderFavBtns();
 
