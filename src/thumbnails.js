@@ -105,7 +105,9 @@ function generateThumbnails() {
     var targetTime = index * thumbnailInterval;
     _thumbVideoEl.currentTime = targetTime;
 
-    _thumbVideoEl.addEventListener('seeked', function onSeeked() {
+    var seekTimeout = null;
+    function onSeeked() {
+      if (seekTimeout) clearTimeout(seekTimeout);
       _thumbVideoEl.removeEventListener('seeked', onSeeked);
       if (!thumbnailGenerating || !_thumbVideoEl) return;
 
@@ -120,12 +122,14 @@ function generateThumbnails() {
       if (thumbnailGenerating) {
         setTimeout(captureNext, 50);
       }
-    });
+    }
+
+    _thumbVideoEl.addEventListener('seeked', onSeeked);
 
     // Timeout guard: if seeked doesn't fire within 3s, skip this frame
-    setTimeout(function() {
+    seekTimeout = setTimeout(function() {
       if (thumbnailGenerating && _thumbVideoEl) {
-        _thumbVideoEl.removeEventListener('seeked', function(){});
+        _thumbVideoEl.removeEventListener('seeked', onSeeked);
         index++;
         captureNext();
       }

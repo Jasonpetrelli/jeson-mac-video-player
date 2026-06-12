@@ -24,6 +24,7 @@ let rendererReady = false;
 
 /** In-flight audio transcode jobs keyed by source file metadata */
 let transcodeAudioJobs = {};
+const MAX_AUDIO_CACHE_BYTES = 10 * 1024 * 1024 * 1024;
 
 function getFfmpegPath() {
   return ffmpeg.path.replace('app.asar', 'app.asar.unpacked');
@@ -129,6 +130,7 @@ async function getTranscodedAudioPath(filePath) {
       });
 
       await fs.promises.rename(tmpPath, outPath);
+      await cleanupAudioCache(outDir, outPath);
       return outPath;
     })().finally(function () {
       delete transcodeAudioJobs[key];
@@ -136,6 +138,37 @@ async function getTranscodedAudioPath(filePath) {
   }
 
   return transcodeAudioJobs[key];
+}
+
+async function cleanupAudioCache(outDir, keepPath) {
+  var entries;
+  try {
+    entries = await fs.promises.readdir(outDir);
+  } catch (err) {
+    return;
+  }
+
+  var files = [];
+  var total = 0;
+  for (var i = 0; i < entries.length; i++) {
+    if (!entries[i].endsWith('.mp4')) continue;
+    var filePath = path.join(outDir, entries[i]);
+    try {
+      var stats = await fs.promises.stat(filePath);
+      files.push({ path: filePath, size: stats.size, mtime: stats.mtime.getTime() });
+      total += stats.size;
+    } catch (err) {}
+  }
+
+  if (total <= MAX_AUDIO_CACHE_BYTES) return;
+  files.sort(function (a, b) { return a.mtime - b.mtime; });
+  for (var j = 0; j < files.length && total > MAX_AUDIO_CACHE_BYTES; j++) {
+    if (files[j].path === keepPath) continue;
+    try {
+      await fs.promises.unlink(files[j].path);
+      total -= files[j].size;
+    } catch (err) {}
+  }
 }
 
 // ── Window Creation ──

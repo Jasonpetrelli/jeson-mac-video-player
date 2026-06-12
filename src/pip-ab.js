@@ -232,7 +232,7 @@ function getVideoInfoData() {
   rows.push(['音量', Math.round(playback.volume * 100) + '%' + (playback.muted ? ' (静音)' : '')]);
 
   if (playback.isMSEMode) {
-    rows.push(['模式', '<span class="info-mse">MSE</span>']);
+    rows.push(['模式', '<span class="info-mse">MSE</span>', true]);
   } else if (item && item._transcodedPath) {
     rows.push(['模式', 'AAC 兼容缓存']);
   }
@@ -251,10 +251,14 @@ function getVideoInfoData() {
 function buildVideoInfoRowsHTML(rows, mode) {
   var html = '';
   rows.forEach(function(row) {
+    var key = escapeHtml(row[0]);
+    var rawValue = row[1] == null ? '' : String(row[1]);
+    var value = row[2] === true ? rawValue : escapeHtml(rawValue);
+    var title = escapeHtml(rawValue.replace(/<[^>]+>/g, ''));
     if (mode === 'side') {
-      html += '<div class="side-info-row"><span class="side-info-key">' + row[0] + '</span><span class="side-info-val" title="' + String(row[1]).replace(/<[^>]+>/g, '') + '">' + row[1] + '</span></div>';
+      html += '<div class="side-info-row"><span class="side-info-key">' + key + '</span><span class="side-info-val" title="' + title + '">' + value + '</span></div>';
     } else {
-      html += '<div class="info-row"><span class="info-key">' + row[0] + '</span><span class="info-val">' + row[1] + '</span></div>';
+      html += '<div class="info-row"><span class="info-key">' + key + '</span><span class="info-val">' + value + '</span></div>';
     }
   });
   return html;
