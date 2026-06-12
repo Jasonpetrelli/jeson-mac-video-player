@@ -25,6 +25,7 @@ let rendererReady = false;
 /** In-flight audio transcode jobs keyed by source file metadata */
 let transcodeAudioJobs = {};
 const MAX_AUDIO_CACHE_BYTES = 10 * 1024 * 1024 * 1024;
+const MAX_MSE_READ_BYTES = 2 * 1024 * 1024 * 1024;
 
 function getFfmpegPath() {
   return ffmpeg.path.replace('app.asar', 'app.asar.unpacked');
@@ -209,15 +210,6 @@ function createWindow() {
     }
   });
 
-  // Dock click behavior — macOS: re-show window when clicking Dock icon
-  app.on('activate', function () {
-    if (mainWindow) {
-      showMainWindow();
-    } else {
-      createWindow();
-    }
-  });
-
   mainWindow.on('closed', function () {
     mainWindow = null;
     rendererReady = false;
@@ -262,6 +254,7 @@ function flushPendingFileOpen() {
   if (!mainWindow || mainWindow.isDestroyed() || !rendererReady || !pendingFilePath) return;
   var fp = pendingFilePath;
   pendingFilePath = null;
+  if (initialFilePath === fp) initialFilePath = null;
   mainWindow.webContents.send('open-file', fp);
 }
 
@@ -270,6 +263,15 @@ function flushPendingFileOpen() {
 app.whenReady().then(function () {
   createWindow();
   buildMenu();
+
+  // Dock click behavior — macOS: re-show window when clicking Dock icon
+  app.on('activate', function () {
+    if (mainWindow) {
+      showMainWindow();
+    } else {
+      createWindow();
+    }
+  });
 
   // macOS: re-create window if all windows are closed
   app.on('window-all-closed', function () {
@@ -331,6 +333,10 @@ ipcMain.handle('open-folder-dialog', async function () {
 /** Read a file as ArrayBuffer — used for MKV MSE pipeline in Electron */
 ipcMain.handle('read-file-buffer', async function (event, filePath) {
   try {
+    var stats = await fs.promises.stat(filePath);
+    if (stats.size > MAX_MSE_READ_BYTES) {
+      throw new Error('文件过大，已改用原生播放');
+    }
     var data = await fs.promises.readFile(filePath);
     return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
   } catch (err) {
@@ -350,6 +356,7 @@ ipcMain.handle('get-file-url', function (event, filePath) {
 
 /** Get the initial file path passed at app launch */
 ipcMain.handle('get-initial-file', function () {
+  if (rendererReady) return null;
   var fp = initialFilePath || pendingFilePath;
   initialFilePath = null;
   pendingFilePath = null;

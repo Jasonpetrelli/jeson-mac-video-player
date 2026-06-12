@@ -7,6 +7,17 @@
  * @returns {object} The created playlist item
  */
 function addLocalFileFromPath(filePath) {
+  function fillFileStats(target) {
+    if (!IS_ELECTRON || !window.electronAPI.getFileStats) return;
+    window.electronAPI.getFileStats(filePath).then(function(stats) {
+      if (!stats || !stats.isFile) return;
+      target._fileSize = stats.size;
+      target._fileLastModified = stats.mtime;
+      updateRightPanelInfo();
+      renderSidebar();
+    }).catch(function() {});
+  }
+
   var duplicate = findLocalDuplicate(filePath, null);
   if (duplicate) {
     duplicate.unavailable = false;
@@ -15,6 +26,7 @@ function addLocalFileFromPath(filePath) {
     duplicate._mseUnsupported = false;
     duplicate._transcodedPath = null;
     duplicate.favorite = isFavoriteItem(duplicate);
+    fillFileStats(duplicate);
     toast('已在队列中：' + duplicate.title);
     renderSidebar();
     return duplicate;
@@ -43,10 +55,13 @@ function addLocalFileFromPath(filePath) {
     _fileRef: null,
     _filePath: filePath,
     _fileName: fileName,
+    _fileSize: null,
+    _fileLastModified: null,
     _mseUnsupported: false
   };
   item.favorite = isFavoriteItem(item);
   playlist.push(item);
+  fillFileStats(item);
   renderSidebar();
   return item;
 }
@@ -122,9 +137,16 @@ async function electronOpenFolderDialog() {
  */
 function initElectronIntegration() {
   if (!IS_ELECTRON) return;
+  var lastOpenedFilePath = '';
+  var lastOpenedAt = 0;
 
   // ── Handle file open events (double-click in Finder, `open -a`, etc.) ──
   window.electronAPI.onOpenFile(function (filePath) {
+    var now = Date.now();
+    if (filePath === lastOpenedFilePath && now - lastOpenedAt < 1000) return;
+    lastOpenedFilePath = filePath;
+    lastOpenedAt = now;
+
     var ext = filePath.split('.').pop().toLowerCase();
     var videoExts = ['mp4', 'mkv', 'webm', 'avi', 'mov', 'flv', 'wmv', 'ts', 'm2ts', 'm4v', '3gp'];
     var subExts = ['srt', 'vtt', 'ass', 'ssa'];
