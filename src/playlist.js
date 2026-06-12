@@ -228,8 +228,13 @@ function getVideoResumeTime(item) {
 function restoreVideoPositionWhenReady(item) {
   var seekTarget = getVideoResumeTime(item);
   if (!seekTarget || seekTarget <= 2) return;
+  var targetId = item.id;
 
   DOM.video.addEventListener('loadedmetadata', function onMeta() {
+    if (currentVideoId !== targetId) {
+      DOM.video.removeEventListener('loadedmetadata', onMeta);
+      return;
+    }
     DOM.video.currentTime = seekTarget;
     DOM.video.removeEventListener('loadedmetadata', onMeta);
   });

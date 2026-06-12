@@ -1,6 +1,7 @@
 
 let seekbarDragging = false;
 let lastSeekHoverTime = 0;
+let seekbarDragTargetTime = 0;
 
 function initSeekbar() {
   DOM.seekbar.addEventListener('mousedown', onSeekbarMouseDown);
@@ -14,13 +15,13 @@ function onSeekbarMouseDown(e) {
   e.preventDefault();
   seekbarDragging = true;
   playback.isSeekDragging = true;
-  updateSeekFromMouse(e);
+  seekbarDragTargetTime = updateSeekFromMouse(e);
 }
 
 function onSeekbarMouseMove(e) {
   if (!seekbarDragging) return;
   e.preventDefault();
-  updateSeekFromMouse(e);
+  seekbarDragTargetTime = updateSeekFromMouse(e);
 }
 
 function onSeekbarMouseUp(e) {
@@ -29,9 +30,7 @@ function onSeekbarMouseUp(e) {
   playback.isSeekDragging = false;
 
   // Apply the seek
-  const pct = getSeekPctFromEvent(e);
-  const targetTime = pct * playback.duration;
-  videoSeek(targetTime);
+  videoSeek(seekbarDragTargetTime);
 
   renderSeekBar();
   renderTimeBadge();
@@ -47,6 +46,7 @@ function updateSeekFromMouse(e) {
   DOM.seekFill.style.width = (pct * 100) + '%';
   DOM.currentTime.textContent = formatTime(pct * playback.duration) + ' / ' + formatTime(playback.duration);
   playback.currentTime = pct * playback.duration;
+  return playback.currentTime;
 }
 
 function getSeekPctFromEvent(e) {
