@@ -39,6 +39,25 @@ function isFavoriteItem(item) {
   return !!findFavoriteByItem(item);
 }
 
+function resetCurrentPlaybackState() {
+  currentVideoId = '';
+  ui.currentVideoId = '';
+  playback.playing = false;
+  playback.currentTime = 0;
+  playback.duration = 0;
+  playback.bufferedEnd = 0;
+  playback.isMSEMode = false;
+  if (typeof clearThumbnailCaches === 'function') clearThumbnailCaches();
+  DOM.mseBadge.classList.remove('visible');
+  renderPlayBtn();
+  renderSeekBar();
+  renderBufferBar();
+  renderTimeBadge();
+  DOM.emptyState.classList.remove('hidden');
+  DOM.filmGrain.classList.remove('video-active');
+  updateRightPanelInfo();
+}
+
 function cloneVideoForFavorite(item) {
   var copy = Object.assign({}, item);
   copy.favorite = true;
@@ -116,6 +135,15 @@ function addLocalFile(file) {
 
 /** Create a VideoItem from a network URL */
 function addNetworkUrl(url, title) {
+  var duplicate = playlist.find(function(v) { return v.type === 'network' && v.url === url; });
+  if (duplicate) {
+    duplicate.title = title || duplicate.title;
+    duplicate.favorite = isFavoriteItem(duplicate);
+    toast('已在队列中：' + duplicate.title);
+    renderSidebar();
+    return duplicate;
+  }
+
   const item = {
     id: generateId(),
     title: title || url.split('/').pop() || '网络视频',
@@ -155,18 +183,7 @@ function removeVideo(id) {
     DOM.video.pause();
     DOM.video.removeAttribute('src');
     DOM.video.load();
-    currentVideoId = '';
-    ui.currentVideoId = '';
-    playback.playing = false;
-    playback.currentTime = 0;
-    playback.duration = 0;
-    playback.isMSEMode = false;
-    DOM.mseBadge.classList.remove('visible');
-    renderPlayBtn();
-    renderSeekBar();
-    renderTimeBadge();
-    DOM.emptyState.classList.remove('hidden');
-    DOM.filmGrain.classList.remove('video-active');
+    resetCurrentPlaybackState();
     updateTitlebar();
     renderFavBtns();
   }
@@ -194,18 +211,7 @@ function clearPlaylist() {
     DOM.video.pause();
     DOM.video.removeAttribute('src');
     DOM.video.load();
-    currentVideoId = '';
-    ui.currentVideoId = '';
-    playback.playing = false;
-    playback.currentTime = 0;
-    playback.duration = 0;
-    playback.isMSEMode = false;
-    DOM.mseBadge.classList.remove('visible');
-    renderPlayBtn();
-    renderSeekBar();
-    renderTimeBadge();
-    DOM.emptyState.classList.remove('hidden');
-    DOM.filmGrain.classList.remove('video-active');
+    resetCurrentPlaybackState();
   }
 
   renderSidebar();

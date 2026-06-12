@@ -29,10 +29,7 @@ function syncThumbnailSource() {
   var src = getThumbnailSource();
   if (src !== thumbnailSource) {
     thumbnailSource = src;
-    thumbnailCache = [];
-    hoverThumbnailCache = {};
-    hoverThumbnailPending = {};
-    cleanupHoverThumbnailVideo();
+    clearThumbnailCaches();
   }
   return src;
 }
@@ -43,6 +40,13 @@ function cleanupHoverThumbnailVideo() {
     if (hoverThumbnailVideo.parentNode) hoverThumbnailVideo.parentNode.removeChild(hoverThumbnailVideo);
     hoverThumbnailVideo = null;
   }
+}
+
+function clearThumbnailCaches() {
+  thumbnailCache = [];
+  hoverThumbnailCache = {};
+  hoverThumbnailPending = {};
+  cleanupHoverThumbnailVideo();
 }
 
 /** Initialize thumbnail canvas */

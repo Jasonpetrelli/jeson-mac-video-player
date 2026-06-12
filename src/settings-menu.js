@@ -7,6 +7,7 @@ function togglePlay() {
     return;
   }
 
+  var willPlay = !playback.playing;
   if (playback.playing) {
     videoPause();
   } else {
@@ -14,11 +15,11 @@ function togglePlay() {
   }
 
   // Show play overlay ring
-  DOM.playRing.textContent = playback.playing ? '⏸' : '▶';
+  DOM.playRing.textContent = willPlay ? '▶' : '⏸';
   DOM.playOverlay.classList.add('show');
   setTimeout(function() { DOM.playOverlay.classList.remove('show'); }, 700);
 
-  showKbd(playback.playing ? '▶' : '⏸');
+  showKbd(willPlay ? '▶' : '⏸');
 }
 
 /** Click on video frame (250ms delay for double-click prevention) */
@@ -292,7 +293,8 @@ function syncSettingsToModal() {
 function setRotate(deg) {
   settings.rotate = deg;
   document.querySelectorAll('.rotate-btn').forEach(function(b) { b.classList.remove('active'); });
-  if (event && event.target) event.target.classList.add('active');
+  var btn = document.getElementById('rotate' + deg);
+  if (btn) btn.classList.add('active');
   applyVideoFilter();
   showKbd(deg === 0 ? '0°' : deg + '°');
 }

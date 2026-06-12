@@ -53,8 +53,10 @@ function onKeyDown(e) {
       if (e.shiftKey) {
         // Shift+Right: subtitle delay +0.5s
         settings.subDelay = (settings.subDelay || 0) + 500;
-        document.getElementById('subDelayRange').value = settings.subDelay;
-        document.getElementById('subDelayVal').textContent = settings.subDelay + 'ms';
+        var sdrRightEl = document.getElementById('subDelayRange');
+        if (sdrRightEl) sdrRightEl.value = settings.subDelay;
+        var sdvRightEl = document.getElementById('subDelayVal');
+        if (sdvRightEl) sdvRightEl.textContent = settings.subDelay + 'ms';
         showKbd('💬 字幕延迟 ' + settings.subDelay + 'ms');
         return;
       }
