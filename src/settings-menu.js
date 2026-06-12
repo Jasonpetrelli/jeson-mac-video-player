@@ -162,6 +162,12 @@ function setNav(el) {
   if (text.includes('全部')) ui.sidebarFilter = 'all';
   else if (text.includes('最近')) ui.sidebarFilter = 'recent';
   else if (text.includes('收藏')) ui.sidebarFilter = 'favorites';
+  ui.favFilterActive = ui.sidebarFilter === 'favorites';
+  var favFilterBtn = document.getElementById('favFilterBtn');
+  if (favFilterBtn) {
+    favFilterBtn.classList.toggle('active', ui.favFilterActive);
+    favFilterBtn.textContent = ui.favFilterActive ? '★' : '☆';
+  }
 
   renderSidebar();
 }

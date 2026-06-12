@@ -246,6 +246,22 @@ function onBeforeUnload() {
   persistAppState();
 }
 
+function syncSidebarFilterUI() {
+  document.querySelectorAll('.nav-item').forEach(function(item) {
+    var text = item.textContent.trim();
+    var active = (ui.sidebarFilter === 'all' && text.includes('全部')) ||
+      (ui.sidebarFilter === 'recent' && text.includes('最近')) ||
+      (ui.sidebarFilter === 'favorites' && text.includes('收藏'));
+    item.classList.toggle('active', active);
+  });
+
+  var btn = document.getElementById('favFilterBtn');
+  if (btn) {
+    btn.classList.toggle('active', ui.favFilterActive);
+    btn.textContent = ui.favFilterActive ? '★' : '☆';
+  }
+}
+
 /* ── Boot ── */
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -269,15 +285,7 @@ document.addEventListener('DOMContentLoaded', function() {
   renderFavBtns();
   renderSubtitle();
   applyVideoFilter();
-
-  // Restore favorites filter button state
-  if (ui.favFilterActive) {
-    var btn = document.getElementById('favFilterBtn');
-    if (btn) {
-      btn.classList.add('active');
-      btn.textContent = '★';
-    }
-  }
+  syncSidebarFilterUI();
 
   // Show empty state
   DOM.emptyState.classList.remove('hidden');
