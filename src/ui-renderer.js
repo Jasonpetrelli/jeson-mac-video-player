@@ -74,6 +74,7 @@ function renderSidebar() {
   const list = DOM.videoList;
   list.innerHTML = '';
   var sourceItems = ui.sidebarFilter === 'favorites' ? favorites : playlist;
+  var canReorder = ui.sidebarFilter === 'all' && !ui.searchQuery;
 
   // ── Empty state ──
   if (sourceItems.length === 0) {
@@ -134,7 +135,7 @@ function renderSidebar() {
       (isUnavailable ? ' unavailable' : '');
     card.setAttribute('data-id', item.id);
     card.setAttribute('data-idx', String(playlistIdx));
-    card.setAttribute('draggable', ui.sidebarFilter === 'favorites' ? 'false' : 'true');
+    card.setAttribute('draggable', canReorder ? 'true' : 'false');
     card.style.position = 'relative';
 
     // Click to switch
@@ -148,7 +149,7 @@ function renderSidebar() {
 
     // ── Drag-and-drop reorder ──
     card.addEventListener('dragstart', function(e) {
-      if (ui.sidebarFilter === 'favorites') return;
+      if (!canReorder) return;
       _dragSrcId = item.id;
       card.classList.add('dragging');
       e.dataTransfer.effectAllowed = 'move';
@@ -163,7 +164,7 @@ function renderSidebar() {
       });
     });
     card.addEventListener('dragover', function(e) {
-      if (ui.sidebarFilter === 'favorites') return;
+      if (!canReorder) return;
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
       if (_dragSrcId === item.id) return;
@@ -182,7 +183,7 @@ function renderSidebar() {
       card.classList.remove('drag-over-top', 'drag-over-bottom');
     });
     card.addEventListener('drop', function(e) {
-      if (ui.sidebarFilter === 'favorites') return;
+      if (!canReorder) return;
       e.preventDefault();
       card.classList.remove('drag-over-top', 'drag-over-bottom');
 
