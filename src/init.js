@@ -71,6 +71,9 @@ function initState() {
     // Restore favorites filter state
     if (saved.favFilterActive) {
       ui.favFilterActive = true;
+      ui.sidebarFilter = 'favorites';
+    } else if (saved.sidebarFilter) {
+      ui.sidebarFilter = saved.sidebarFilter;
     }
     if (saved.settingsTab) {
       ui.settingsTab = saved.settingsTab;
@@ -228,6 +231,7 @@ function persistAppState() {
     favorites: serializedFavorites,
     currentVideoId: currentVideoId,
     favFilterActive: ui.favFilterActive,
+    sidebarFilter: ui.sidebarFilter,
     settingsTab: ui.settingsTab,
     lastPlayback: currentVideoId ? {
       videoId: currentVideoId,
