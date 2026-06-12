@@ -16,10 +16,28 @@ function storageSave(data) {
 function storageLoad() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    var data = JSON.parse(raw);
+    var changed = stripStoredThumbnails(data);
+    if (changed) storageSave(data);
+    return data;
   } catch (e) {
     return null;
   }
+}
+
+function stripStoredThumbnails(data) {
+  var changed = false;
+  ['videos', 'favorites'].forEach(function(key) {
+    if (!data || !Array.isArray(data[key])) return;
+    data[key].forEach(function(item) {
+      if (item && item.thumbnail) {
+        item.thumbnail = '';
+        changed = true;
+      }
+    });
+  });
+  return changed;
 }
 
 /** Save current playback position for the active video */

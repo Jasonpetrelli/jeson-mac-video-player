@@ -29,6 +29,53 @@ function getFfmpegPath() {
   return ffmpeg.path.replace('app.asar', 'app.asar.unpacked');
 }
 
+function mapProbeVideoCodec(codec) {
+  if (codec === 'hevc' || codec === 'h265') return 'V_MPEGH/ISO/HEVC';
+  if (codec === 'h264') return 'V_MPEG4/ISO/AVC';
+  if (codec === 'vp9') return 'V_VP9';
+  if (codec === 'vp8') return 'V_VP8';
+  if (codec === 'av1') return 'V_AV1';
+  return codec || '';
+}
+
+function mapProbeAudioCodec(codec) {
+  if (codec === 'eac3') return 'A_EAC3';
+  if (codec === 'ac3') return 'A_AC3';
+  if (codec === 'aac') return 'A_AAC';
+  if (codec === 'mp3') return 'A_MPEG/L3';
+  if (codec === 'opus') return 'A_OPUS';
+  if (codec === 'vorbis') return 'A_VORBIS';
+  if (codec === 'flac') return 'A_FLAC';
+  return codec || '';
+}
+
+async function probeMedia(filePath) {
+  return await new Promise(function (resolve, reject) {
+    var child = spawn(getFfmpegPath(), ['-hide_banner', '-i', filePath]);
+    var stderr = '';
+
+    child.stderr.on('data', function (chunk) {
+      stderr += chunk.toString();
+      if (stderr.length > 200000) stderr = stderr.slice(0, 200000);
+    });
+    child.on('error', reject);
+    child.on('close', function () {
+      var videoMatch = stderr.match(/Stream #\d+:\d+[^:]*: Video: ([^,\s]+)/);
+      var audioMatch = stderr.match(/Stream #\d+:\d+[^:]*: Audio: ([^,\s]+)/);
+      var durationMatch = stderr.match(/Duration: (\d+):(\d+):(\d+(?:\.\d+)?)/);
+      var duration = 0;
+      if (durationMatch) {
+        duration = Number(durationMatch[1]) * 3600 + Number(durationMatch[2]) * 60 + Number(durationMatch[3]);
+      }
+      resolve({
+        videoCodec: videoMatch ? mapProbeVideoCodec(videoMatch[1].toLowerCase()) : '',
+        audioCodec: audioMatch ? mapProbeAudioCodec(audioMatch[1].toLowerCase()) : '',
+        duration: duration
+      });
+    });
+  });
+}
+
 async function getTranscodedAudioPath(filePath) {
   var stats = await fs.promises.stat(filePath);
   var key = crypto
@@ -292,6 +339,16 @@ ipcMain.handle('transcode-audio-for-playback', async function (event, filePath) 
   } catch (err) {
     console.error('[Prism] audio transcode failed:', err.message);
     throw new Error('音频转换失败');
+  }
+});
+
+/** Probe media streams without loading the full file into renderer memory */
+ipcMain.handle('probe-media', async function (event, filePath) {
+  try {
+    return await probeMedia(filePath);
+  } catch (err) {
+    console.error('[Prism] media probe failed:', err.message);
+    return null;
   }
 });
 

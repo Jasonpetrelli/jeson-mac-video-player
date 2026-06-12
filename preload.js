@@ -101,6 +101,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return ipcRenderer.invoke('transcode-audio-for-playback', filePath);
   },
 
+  /**
+   * Probe media streams without reading the whole file into renderer memory.
+   * @param {string} filePath - Absolute path to the source video
+   * @returns {Promise<{videoCodec:string,audioCodec:string,duration:number}|null>}
+   */
+  probeMedia: function (filePath) {
+    return ipcRenderer.invoke('probe-media', filePath);
+  },
+
   // ── Event Listeners ──
 
   /**

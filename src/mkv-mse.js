@@ -27,6 +27,16 @@ function needsAudioTranscode(audioTrack) {
   return !!(audioTrack && (audioTrack.codecID === 'A_EAC3' || audioTrack.codecID === 'A_AC3'));
 }
 
+function isLikelyUnsupportedMSEVideo(videoCodec) {
+  if (!videoCodec) return false;
+  return videoCodec === 'V_MPEGH/ISO/HEVC' || videoCodec === 'V_MPEG4/ISO/HEVC';
+}
+
+function buildProbeAudioTrack(probe) {
+  if (!probe || !probe.audioCodec) return null;
+  return { codecID: probe.audioCodec, audio: { samplingFrequency: 0, channels: 0, bitDepth: 0 } };
+}
+
 async function loadNativeFallback(item, audioTrack) {
   playback.isMSEMode = false;
   if (DOM.mseBadge) DOM.mseBadge.classList.remove('visible');
@@ -64,6 +74,20 @@ async function loadViaMSE(item) {
   showMSELoading('正在解析 MKV 文件…', sizeHint);
 
   try {
+    if (IS_ELECTRON && item._filePath && !item._fileRef && window.electronAPI.probeMedia) {
+      var probe = await window.electronAPI.probeMedia(item._filePath);
+      if (probe && probe.duration > 0 && !item.duration) {
+        item.duration = probe.duration;
+        playback.duration = probe.duration;
+      }
+      if (probe && (isLikelyUnsupportedMSEVideo(probe.videoCodec) || needsAudioTranscode(buildProbeAudioTrack(probe)))) {
+        item._mseUnsupported = true;
+        hideMSELoading();
+        await loadNativeFallback(item, buildProbeAudioTrack(probe));
+        return;
+      }
+    }
+
     // Read file as ArrayBuffer
     // In Electron, prefer reading by file path (bypasses File object limitations)
     var arrayBuffer;
