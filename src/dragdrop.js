@@ -75,6 +75,11 @@ function onDrop(e) {
     switchToVideo(firstAddedId);
   }
 
+  // Close add modal if open
+  if (ui.addVideoModalOpen) {
+    closeAddVideoModal();
+  }
+
   // If only subtitles were dropped, just show a notification
   if (!firstAddedId && hasSubtitles) {
     toast('💬 字幕文件已加载');
