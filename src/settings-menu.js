@@ -181,8 +181,8 @@ function updateQueueViewBtn() {
   var btn = document.getElementById('queueViewBtn');
   if (!btn) return;
   var isList = ui.queueViewMode === 'list';
-  btn.textContent = isList ? '截图' : '文字';
-  btn.title = isList ? '切换为截图列表' : '切换为文字列表';
+  btn.textContent = isList ? '封面' : '列表';
+  btn.title = isList ? '切换为封面视图' : '切换为列表视图';
 }
 
 function toggleQueueViewMode() {
