@@ -266,10 +266,7 @@ function syncSidebarFilterUI() {
   }
 
   var viewBtn = document.getElementById('queueViewBtn');
-  if (viewBtn) {
-    viewBtn.textContent = ui.queueViewMode === 'list' ? '截图' : '文字';
-    viewBtn.title = ui.queueViewMode === 'list' ? '切换为截图列表' : '切换为文字列表';
-  }
+  if (viewBtn) updateQueueViewBtn();
 }
 
 /* ── Boot ── */

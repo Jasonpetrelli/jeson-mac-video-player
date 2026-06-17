@@ -74,7 +74,7 @@ function renderSidebar() {
   const list = DOM.videoList;
   list.innerHTML = '';
   var sourceItems = ui.sidebarFilter === 'favorites' ? favorites : playlist;
-  var canReorder = ui.sidebarFilter === 'all' && !ui.searchQuery;
+  var canReorder = ui.sidebarFilter === 'all' && !ui.searchQuery && ui.queueViewMode !== 'list';
 
   // ── Empty state ──
   if (sourceItems.length === 0) {

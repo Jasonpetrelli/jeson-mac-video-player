@@ -22,14 +22,14 @@ function switchAddTab(el, tab) {
 
 function getLocalPathFromAddress(input) {
   if (!input || !IS_ELECTRON) return '';
-  if (input.indexOf('file://') === 0) {
+  if (input.startsWith('file://')) {
     try {
-      return decodeURIComponent(input.replace(/^file:\/\//, ''));
+      return decodeURIComponent(input.slice(7));
     } catch (err) {
-      return input.replace(/^file:\/\//, '');
+      return input.slice(7);
     }
   }
-  if (input.charAt(0) === '/') return input;
+  if (input.startsWith('/')) return input;
   return '';
 }
 
@@ -49,7 +49,7 @@ function addNetworkVideo() {
   }
 
   if (/^(smb|afp|nfs):\/\//i.test(url)) {
-    toast('请先在 Finder 挂载 NAS，再选择 /Volumes 下的视频文件');
+    toast('请将 NAS 挂载到 Finder 后，复制 /Volumes 下的路径粘贴');
     return;
   }
 
