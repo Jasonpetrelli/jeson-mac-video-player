@@ -177,6 +177,16 @@ function toggleCtrl(btn, label) {
   toast((btn.classList.contains('active') ? '✓ ' : '✗ ') + label);
 }
 
+function toggleQueueViewMode() {
+  ui.queueViewMode = ui.queueViewMode === 'list' ? 'thumb' : 'list';
+  var btn = document.getElementById('queueViewBtn');
+  if (btn) {
+    btn.textContent = ui.queueViewMode === 'list' ? '截图' : '文字';
+    btn.title = ui.queueViewMode === 'list' ? '切换为截图列表' : '切换为文字列表';
+  }
+  renderSidebar();
+}
+
 /* ── Kbd hint ── */
 
 let kbdTimer;

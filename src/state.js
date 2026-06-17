@@ -39,6 +39,7 @@ const ui = {
   settingsTab: 'playback', // 'playback' | 'display' | 'about'
   addVideoModalOpen: false,
   searchQuery: '',
+  queueViewMode: 'thumb',   // 'thumb' | 'list'
   miniMode: false           // T05: mini mode active
 };
 

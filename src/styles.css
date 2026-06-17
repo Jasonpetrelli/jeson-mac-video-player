@@ -356,6 +356,36 @@
       font-size: 11px;
       color: var(--t-3);
     }
+    .video-card.list-mode {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 42px;
+      margin-bottom: 3px;
+      padding: 7px 8px;
+    }
+    .video-card.list-mode .list-idx {
+      width: 22px;
+      flex: 0 0 22px;
+      text-align: right;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--t-3);
+      font-variant-numeric: tabular-nums;
+    }
+    .video-card.list-mode.active .list-idx { color: var(--accent); }
+    .video-card.list-mode .list-meta {
+      min-width: 0;
+      flex: 1;
+    }
+    .video-card.list-mode .video-info-row {
+      justify-content: flex-start;
+      gap: 10px;
+    }
+    .video-card.list-mode .card-fav {
+      position: static;
+      flex: 0 0 auto;
+    }
 
     /* Sidebar empty state */
     .sb-empty {

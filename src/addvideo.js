@@ -20,6 +20,19 @@ function switchAddTab(el, tab) {
   document.getElementById('addPanelFile').style.display = tab === 'file' ? '' : 'none';
 }
 
+function getLocalPathFromAddress(input) {
+  if (!input || !IS_ELECTRON) return '';
+  if (input.indexOf('file://') === 0) {
+    try {
+      return decodeURIComponent(input.replace(/^file:\/\//, ''));
+    } catch (err) {
+      return input.replace(/^file:\/\//, '');
+    }
+  }
+  if (input.charAt(0) === '/') return input;
+  return '';
+}
+
 function addNetworkVideo() {
   const url = document.getElementById('addUrlInput').value.trim();
   if (!url) {
@@ -27,9 +40,22 @@ function addNetworkVideo() {
     return;
   }
 
+  var localPath = getLocalPathFromAddress(url);
+  if (localPath) {
+    var localItem = addLocalFileFromPath(localPath);
+    closeAddVideoModal();
+    switchToVideo(localItem.id);
+    return;
+  }
+
+  if (/^(smb|afp|nfs):\/\//i.test(url)) {
+    toast('请先在 Finder 挂载 NAS，再选择 /Volumes 下的视频文件');
+    return;
+  }
+
   // Basic URL validation
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    toast('请输入有效的 HTTP/HTTPS 地址');
+    toast('请输入 HTTP/HTTPS 地址，或粘贴 /Volumes 下的本地路径');
     return;
   }
 
@@ -38,4 +64,3 @@ function addNetworkVideo() {
   closeAddVideoModal();
   switchToVideo(item.id);
 }
-

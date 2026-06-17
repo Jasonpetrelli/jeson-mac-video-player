@@ -208,6 +208,7 @@ function renderSidebar() {
     // ── Build card HTML ──
     const sceneClasses = ['scene-1', 'scene-2', 'scene-3', 'scene-4'];
     const sceneIdx = playlistIdx % sceneClasses.length;
+    const isListMode = ui.queueViewMode === 'list';
 
     const progressPct = item.duration > 0 ? Math.round(item.progress * 100) : 0;
     const progressLabel = progressPct > 0 ? (progressPct >= 100 ? '已看完' : progressPct + '%') : '未观看';
@@ -217,7 +218,18 @@ function renderSidebar() {
     // Truncate long titles in the middle
     const displayTitle = truncateMiddle(item.title, 36);
 
-    card.innerHTML =
+    card.classList.toggle('list-mode', isListMode);
+    card.innerHTML = isListMode ?
+      '<span class="list-idx">' + (playlistIdx + 1) + '</span>' +
+      '<div class="list-meta">' +
+        '<div class="video-title" title="' + escapeHtml(item.title) + '">' + escapeHtml(displayTitle) + '</div>' +
+        '<div class="video-info-row">' +
+          '<span>' + typeLabel + '</span>' +
+          '<span>' + durationStr + '</span>' +
+          '<span>' + progressLabel + '</span>' +
+        '</div>' +
+      '</div>' +
+      (item.favorite ? '<div class="card-fav">★</div>' : '') :
       '<div class="video-thumb ' + sceneClasses[sceneIdx] + '">' +
         (item.thumbnail ? '<img class="video-thumb-img" src="' + item.thumbnail + '" alt="">' : '') +
         '<span class="thumb-idx">' + (playlistIdx + 1) + '</span>' +

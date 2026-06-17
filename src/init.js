@@ -78,6 +78,9 @@ function initState() {
     if (saved.settingsTab) {
       ui.settingsTab = saved.settingsTab;
     }
+    if (saved.queueViewMode === 'list' || saved.queueViewMode === 'thumb') {
+      ui.queueViewMode = saved.queueViewMode;
+    }
   }
 }
 
@@ -233,6 +236,7 @@ function persistAppState() {
     favFilterActive: ui.favFilterActive,
     sidebarFilter: ui.sidebarFilter,
     settingsTab: ui.settingsTab,
+    queueViewMode: ui.queueViewMode,
     lastPlayback: currentVideoId ? {
       videoId: currentVideoId,
       currentTime: playback.currentTime,
@@ -259,6 +263,12 @@ function syncSidebarFilterUI() {
   if (btn) {
     btn.classList.toggle('active', ui.favFilterActive);
     btn.textContent = ui.favFilterActive ? '★' : '☆';
+  }
+
+  var viewBtn = document.getElementById('queueViewBtn');
+  if (viewBtn) {
+    viewBtn.textContent = ui.queueViewMode === 'list' ? '截图' : '文字';
+    viewBtn.title = ui.queueViewMode === 'list' ? '切换为截图列表' : '切换为文字列表';
   }
 }
 

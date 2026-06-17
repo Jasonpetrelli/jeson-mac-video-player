@@ -95,6 +95,7 @@
       <div class="sb-queue-header">
         <div class="sb-label">队列</div>
         <div class="sb-queue-actions">
+          <button class="sb-action-btn" id="queueViewBtn" title="切换列表样式" onclick="toggleQueueViewMode()">文字</button>
           <button class="sb-action-btn" title="清空队列" onclick="clearPlaylist()">清空</button>
           <button class="sb-add-btn" title="添加视频" onclick="openAddVideoModal()">+</button>
         </div>
@@ -364,7 +365,7 @@
         <div id="addPanelUrl">
           <div class="avm-input-group">
             <label>视频地址</label>
-            <input type="text" class="avm-input" id="addUrlInput" placeholder="输入 HTTP/HTTPS 地址…">
+            <input type="text" class="avm-input" id="addUrlInput" placeholder="输入 HTTP/HTTPS 地址，或 /Volumes 下的视频路径…">
           </div>
           <div class="avm-input-group">
             <label>视频标题（可选）</label>

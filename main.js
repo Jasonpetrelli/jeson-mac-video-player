@@ -470,23 +470,40 @@ ipcMain.handle('get-file-stats', async function (event, filePath) {
 /** Scan a directory for video files */
 ipcMain.handle('scan-directory', async function (event, dirPath) {
   var videoExts = ['mp4', 'mkv', 'webm', 'avi', 'mov', 'flv', 'wmv', 'ts', 'm2ts', 'm4v', '3gp'];
+  var maxVideos = 2000;
+  var maxDirs = 500;
+  var dirCount = 0;
+  var videos = [];
 
-  try {
-    var entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
-    var videos = [];
+  async function scan(currentDir) {
+    if (videos.length >= maxVideos || dirCount >= maxDirs) return;
+    dirCount++;
 
+    var entries = await fs.promises.readdir(currentDir, { withFileTypes: true });
     for (var i = 0; i < entries.length; i++) {
+      if (videos.length >= maxVideos || dirCount >= maxDirs) return;
       var entry = entries[i];
+      if (entry.name.charAt(0) === '.') continue;
+      var entryPath = path.join(currentDir, entry.name);
+
+      if (entry.isDirectory()) {
+        await scan(entryPath);
+        continue;
+      }
+
       if (!entry.isFile()) continue;
       var ext = path.extname(entry.name).toLowerCase().replace('.', '');
       if (videoExts.indexOf(ext) >= 0) {
         videos.push({
           name: entry.name,
-          path: path.join(dirPath, entry.name)
+          path: entryPath
         });
       }
     }
+  }
 
+  try {
+    await scan(dirPath);
     return videos;
   } catch (err) {
     console.error('[Prism] scan-directory failed:', err.message);
