@@ -91,16 +91,19 @@ function setSpeed(s) {
 
 /* ── Panel ── */
 
-function togglePanel() {
+function togglePanel(panel) {
   ui.rightPanelOpen = !ui.rightPanelOpen;
   DOM.rightPanel.classList.toggle('open', ui.rightPanelOpen);
   DOM.panelBtn.classList.toggle('active', ui.rightPanelOpen);
+  if (ui.rightPanelOpen && panel) {
+    var tab = document.getElementById(panel === 'subs' ? 'tabSubs' : 'tabInfo');
+    if (tab) switchTab(tab, panel);
+  }
 }
 
 function switchTab(el, panel) {
   document.querySelectorAll('.rp-tab').forEach(function(t) { t.classList.remove('active'); });
   el.classList.add('active');
-  document.getElementById('panelHistory').style.display = panel === 'history' ? '' : 'none';
   document.getElementById('panelSubs').style.display    = panel === 'subs'     ? '' : 'none';
   document.getElementById('panelInfo').style.display    = panel === 'info'    ? '' : 'none';
   ui.rightPanelTab = panel;

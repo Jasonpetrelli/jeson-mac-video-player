@@ -34,7 +34,7 @@ const ui = {
   sidebarFilter: 'all',    // 'all' | 'recent' | 'favorites'
   favFilterActive: false,  // Quick toggle for favorites-only in sidebar
   rightPanelOpen: false,
-  rightPanelTab: 'history',
+  rightPanelTab: 'info',
   settingsOpen: false,
   settingsTab: 'playback', // 'playback' | 'display' | 'about'
   addVideoModalOpen: false,

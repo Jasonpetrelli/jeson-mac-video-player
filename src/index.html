@@ -23,21 +23,16 @@
       </div>
       <span class="titlebar-title" id="titlebarTitle">Prism</span>
       <div class="tb-actions">
-        <button class="icon-btn" title="搜索" onclick="toast('🔍 搜索视频…')">
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9">
-            <circle cx="6.5" cy="6.5" r="4.5" />
-            <path d="m10 10 3 3" />
-          </svg>
-        </button>
         <button class="icon-btn" title="收藏" id="favBtn" onclick="toggleFav()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
           </svg>
         </button>
-        <button class="icon-btn" title="播放记录" id="panelBtn" onclick="togglePanel()">
+        <button class="icon-btn" title="视频信息" id="panelBtn" onclick="togglePanel('info')">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9">
             <circle cx="8" cy="8" r="6" />
-            <polyline points="8 4 8 8 11 10" />
+            <path d="M8 7.5v4" />
+            <circle cx="8" cy="4.8" r=".6" fill="currentColor" stroke="none" />
           </svg>
         </button>
         <button class="icon-btn" title="画中画 (L)" onclick="togglePiP()">
@@ -172,23 +167,10 @@
         <!-- Right Panel -->
         <div class="right-panel" id="rightPanel">
           <div class="rp-tabs">
-            <div class="rp-tab active" onclick="switchTab(this, 'history')" id="tabHistory">播放记录</div>
+            <div class="rp-tab active" onclick="switchTab(this, 'info')" id="tabInfo">信息</div>
             <div class="rp-tab" onclick="switchTab(this, 'subs')" id="tabSubs">字幕</div>
-            <div class="rp-tab" onclick="switchTab(this, 'info')" id="tabInfo">信息</div>
           </div>
           <div class="rp-body" id="rpBody">
-
-            <!-- Play History -->
-            <div id="panelHistory">
-              <div style="font-size:11px; color:var(--t-3); margin-bottom: 10px; padding: 0 2px;">最近观看</div>
-              <div id="historyList">
-                <!-- History items rendered dynamically -->
-              </div>
-              <div
-                style="font-size:10px; color:var(--t-3); text-align:center; margin-top:16px; cursor:pointer; opacity:0.6; transition:opacity var(--dur-fast);"
-                onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.6'"
-                onclick="toast('🗑 播放记录已清空')">清除所有记录</div>
-            </div>
 
             <!-- Subtitles (hidden) -->
             <div id="panelSubs" style="display:none">
@@ -205,7 +187,7 @@
             </div>
 
             <!-- Info (hidden) -->
-            <div id="panelInfo" style="display:none">
+            <div id="panelInfo">
               <div class="side-info-title" id="infoTitle">暂无视频信息</div>
               <div class="side-info-list" id="infoTable"></div>
             </div>
@@ -605,7 +587,7 @@
     <div class="ctx-row" onclick="closeCtx(); takeScreenshot()">📸 截图</div>
     <div class="ctx-row" onclick="closeCtx(); toggleFav()" id="ctxFav">⭐ 收藏 / 取消收藏</div>
     <div class="ctx-sep"></div>
-    <div class="ctx-row" onclick="closeCtx(); togglePanel()">📜 播放记录与字幕</div>
+    <div class="ctx-row" onclick="closeCtx(); togglePanel('info')">ⓘ 视频信息与字幕</div>
     <div class="ctx-row" onclick="closeCtx(); togglePiP()">⧉ 画中画</div>
     <div class="ctx-sep"></div>
     <div class="ctx-row" onclick="closeCtx(); openSettings()">🎚 音频 / 视频设置</div>
