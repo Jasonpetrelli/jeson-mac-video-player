@@ -337,8 +337,10 @@ function resetScale() {
 
 function setScale(val) {
   settings.scale = parseInt(val);
+  document.getElementById('scaleRange').value = settings.scale;
   document.getElementById('scaleVal').textContent = settings.scale + '%';
   applyVideoFilter();
+  renderSeekBar();
 }
 
 function setFilter() {
