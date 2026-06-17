@@ -52,11 +52,9 @@ function onDrop(e) {
       continue;
     }
 
-    // Validate video file type (accept standard video + MKV/WebM containers)
-    var mkvExts = ['mkv', 'webm', 'avi', 'flv', 'wmv', 'ts', 'm2ts'];
+    // Validate video file type (accept standard video + known containers)
     var isVideoType = file.type.startsWith('video/');
-    var isMKVContainer = mkvExts.indexOf(fileExt) >= 0;
-    if (!isVideoType && !isMKVContainer) {
+    if (!isVideoType && !isSupportedVideoExt(fileExt)) {
       toast('⚠ 不支持的文件格式：' + file.name);
       continue;
     }
@@ -95,10 +93,8 @@ function handleFileSelect(fileList) {
   for (let i = 0; i < fileList.length; i++) {
     const file = fileList[i];
     var fileExt = file.name.split('.').pop().toLowerCase();
-    var mkvExts = ['mkv', 'webm', 'avi', 'flv', 'wmv', 'ts', 'm2ts'];
     var isVideoType = file.type.startsWith('video/');
-    var isMKVContainer = mkvExts.indexOf(fileExt) >= 0;
-    if (!isVideoType && !isMKVContainer) {
+    if (!isVideoType && !isSupportedVideoExt(fileExt)) {
       toast('⚠ 不支持的文件格式：' + file.name);
       continue;
     }
@@ -112,4 +108,3 @@ function handleFileSelect(fileList) {
     switchToVideo(firstAddedId);
   }
 }
-

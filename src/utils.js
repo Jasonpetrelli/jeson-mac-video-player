@@ -2,6 +2,24 @@
 /** Detect Electron environment */
 const IS_ELECTRON = !!(window.electronAPI);
 
+const VIDEO_EXTS = [
+  'mp4', 'm4v', 'mov', 'qt',
+  'mkv', 'webm',
+  'avi', 'divx',
+  'flv', 'f4v',
+  'wmv', 'asf',
+  'ts', 'm2ts', 'mts',
+  '3gp', '3g2',
+  'mpg', 'mpeg', 'mpe', 'vob',
+  'ogv', 'ogg', 'ogm',
+  'rm', 'rmvb',
+  'mxf'
+];
+
+function isSupportedVideoExt(ext) {
+  return VIDEO_EXTS.indexOf(String(ext || '').toLowerCase()) >= 0;
+}
+
 /** Format seconds to human-readable time string */
 function formatTime(totalSeconds) {
   if (!isFinite(totalSeconds) || totalSeconds < 0) return '0:00';
@@ -45,4 +63,3 @@ function truncateMiddle(str, maxLen) {
   const backLen = maxLen - frontLen - 3;
   return str.substring(0, frontLen) + '...' + str.substring(str.length - backLen);
 }
-

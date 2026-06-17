@@ -8,6 +8,20 @@ const ffmpeg = require('@ffmpeg-installer/ffmpeg');
 
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 
+const VIDEO_EXTS = [
+  'mp4', 'm4v', 'mov', 'qt',
+  'mkv', 'webm',
+  'avi', 'divx',
+  'flv', 'f4v',
+  'wmv', 'asf',
+  'ts', 'm2ts', 'mts',
+  '3gp', '3g2',
+  'mpg', 'mpeg', 'mpe', 'vob',
+  'ogv', 'ogg', 'ogm',
+  'rm', 'rmvb',
+  'mxf'
+];
+
 // ── Globals ──
 
 /** @type {BrowserWindow | null} */
@@ -310,7 +324,7 @@ ipcMain.handle('open-file-dialog', async function () {
     title: '选择视频文件',
     properties: ['openFile', 'multiSelections'],
     filters: [
-      { name: '视频文件', extensions: ['mp4', 'mkv', 'webm', 'avi', 'mov', 'flv', 'wmv', 'ts', 'm2ts', 'm4v', '3gp'] },
+      { name: '视频文件', extensions: VIDEO_EXTS },
       { name: '所有文件', extensions: ['*'] }
     ]
   });
@@ -469,7 +483,6 @@ ipcMain.handle('get-file-stats', async function (event, filePath) {
 
 /** Scan a directory for video files */
 ipcMain.handle('scan-directory', async function (event, dirPath) {
-  var videoExts = ['mp4', 'mkv', 'webm', 'avi', 'mov', 'flv', 'wmv', 'ts', 'm2ts', 'm4v', '3gp'];
   var maxVideos = 2000;
   var maxDirs = 500;
   var dirCount = 0;
@@ -493,7 +506,7 @@ ipcMain.handle('scan-directory', async function (event, dirPath) {
 
       if (!entry.isFile()) continue;
       var ext = path.extname(entry.name).toLowerCase().replace('.', '');
-      if (videoExts.indexOf(ext) >= 0) {
+      if (VIDEO_EXTS.indexOf(ext) >= 0) {
         videos.push({
           name: entry.name,
           path: entryPath

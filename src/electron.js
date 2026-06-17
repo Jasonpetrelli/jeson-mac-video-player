@@ -148,10 +148,9 @@ function initElectronIntegration() {
     lastOpenedAt = now;
 
     var ext = filePath.split('.').pop().toLowerCase();
-    var videoExts = ['mp4', 'mkv', 'webm', 'avi', 'mov', 'flv', 'wmv', 'ts', 'm2ts', 'm4v', '3gp'];
     var subExts = ['srt', 'vtt', 'ass', 'ssa'];
 
-    if (videoExts.indexOf(ext) >= 0) {
+    if (isSupportedVideoExt(ext)) {
       var item = addLocalFileFromPath(filePath);
       switchToVideo(item.id);
       toast('📂 已打开：' + item.title);
@@ -216,8 +215,7 @@ function initElectronIntegration() {
   window.electronAPI.getInitialFile().then(function (filePath) {
     if (filePath) {
       var ext = filePath.split('.').pop().toLowerCase();
-      var videoExts = ['mp4', 'mkv', 'webm', 'avi', 'mov', 'flv', 'wmv', 'ts', 'm2ts', 'm4v', '3gp'];
-      if (videoExts.indexOf(ext) >= 0) {
+      if (isSupportedVideoExt(ext)) {
         var item = addLocalFileFromPath(filePath);
         switchToVideo(item.id);
       }
